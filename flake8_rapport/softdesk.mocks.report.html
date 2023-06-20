@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+   <head>
+      <title>flake8 violations: softdesk/mocks.py</title>
+      <meta http-equiv="Content-Type" value="text/html; charset=UTF-8">
+      <link rel="stylesheet" href="styles.css">
+<script>
+function bindHandler(link) {
+   var code = link.getAttribute('data-code');
+   var key = location.pathname + '#' + code;
+
+   var ul = link.parentNode.querySelector('.details');
+   if (sessionStorage[key] != 'open') {
+      ul.style.display = 'none';
+   }
+   link.addEventListener('click', function (event) {
+      if (!ul.style.display || ul.style.display == 'none') {
+         ul.style.display = 'block';
+         sessionStorage[key] = 'open';
+      } else {
+         ul.style.display = 'none';
+         sessionStorage[key] = 'closed';
+      }
+   });
+}
+
+window.addEventListener('DOMContentLoaded', function () {
+   var links = document.querySelectorAll('#index > li > a');
+   for (var i = 0; i < links.length; i++) {
+      bindHandler(links[i]);
+   }
+});
+</script>
+   </head>
+   <body>
+      <div id="masthead" class="sev-2"></div>
+      <div id="page">
+         <p id="srclink">
+            <a title="View full annotated source"
+               href="softdesk.mocks.source.html">
+               <img src="file.svg" alt="&#x2261;">
+            </a></p>
+         <h1>
+            <a href="index.html">
+               <img src="back.svg" alt="&#x2B05;">
+               softdesk/mocks.py
+            </a>
+         </h1>
+
+         <ul id="index">
+         
+         <li>
+            <a data-code="E122">
+               <span class="count sev-2">
+                  2
+               </span>
+               <strong>E122:</strong> continuation line missing indentation or outdented
+               
+            </a>
+            <ul class="details">
+            <li>
+               
+               <a href="softdesk.mocks.source.html#l21">
+                  <tt><i>21</i>         <span class="s2">&quot;refresh&quot;</span><span class="p">:</span> <span class="n">REFRESH_TOKEN</span><span class="p">,</span></tt>
+               </a>
+            </li><li>
+               
+               <a href="softdesk.mocks.source.html#l22">
+                  <tt><i>22</i>         <span class="s2">&quot;access&quot;</span><span class="p">:</span> <span class="n">ACCESS_TOKEN</span><span class="p">,</span></tt>
+               </a>
+            </li>
+            </ul>
+         </li>
+         
+         <li>
+            <a data-code="E302">
+               <span class="count sev-2">
+                  2
+               </span>
+               <strong>E302:</strong> expected 2 blank lines, found 1
+               
+            </a>
+            <ul class="details">
+            <li>
+               
+               <a href="softdesk.mocks.source.html#l6">
+                  <tt><i>6</i> <span class="k">def</span> <span class="nf">mock_softdesk_api_signin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">url</span><span class="p">):</span></tt>
+               </a>
+            </li><li>
+               
+               <a href="softdesk.mocks.source.html#l18">
+                  <tt><i>18</i> <span class="k">def</span> <span class="nf">mock_softdesk_api_obtain_token</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">url</span><span class="p">):</span></tt>
+               </a>
+            </li>
+            </ul>
+         </li>
+         
+         <li>
+            <a data-code="E501">
+               <span class="count sev-2">
+                  2
+               </span>
+               <strong>E501:</strong> line too long (247 > 119 characters)
+               
+                  (and 1 similar)
+               
+            </a>
+            <ul class="details">
+            <li>
+               
+               <p>Line too long (247 > 119 characters):</p>
+               
+               <a href="softdesk.mocks.source.html#l3">
+                  <tt><i>3</i> <span class="n">REFRESH_TOKEN</span> <span class="o">=</span> <span class="s2">&quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTY4NjE2NjM2MywiaWF0IjoxNjg2MDc5OTYzLCJqdGkiOiI4MzA2MjE4NjNhNTQ0ODg4YTRhNTE5YzYzYWY2OWJlMyIsInVzZXJfaWQiOjd9.FyuG-Hf8JWkHr-6S9slhoy7t1mcFeaqhD-VGixTML3g&quot;</span></tt>
+               </a>
+            </li><li>
+               
+               <p>Line too long (245 > 119 characters):</p>
+               
+               <a href="softdesk.mocks.source.html#l4">
+                  <tt><i>4</i> <span class="n">ACCESS_TOKEN</span> <span class="o">=</span> <span class="s2">&quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNjg2MDgwMjYzLCJpYXQiOjE2ODYwNzk5NjMsImp0aSI6ImQxMDYyNTg1MDhiZTQ1YzNiYjc2YWI5ZmNhZGFhMWVlIiwidXNlcl9pZCI6N30.0fr8ZHZG3xYuYWFnu3gHtWUII7vRn2k68_1Bdkr-Tm0&quot;</span></tt>
+               </a>
+            </li>
+            </ul>
+         </li>
+         
+         <li>
+            <a data-code="E121">
+               <span class="count sev-2">
+                  1
+               </span>
+               <strong>E121:</strong> continuation line under-indented for hanging indent
+               
+            </a>
+            <ul class="details">
+            <li>
+               
+               <a href="softdesk.mocks.source.html#l9">
+                  <tt><i>9</i>           <span class="s2">&quot;first_name&quot;</span><span class="p">:</span> <span class="s2">&quot;donald&quot;</span><span class="p">,</span></tt>
+               </a>
+            </li>
+            </ul>
+         </li>
+         
+         </ul>
+      </div>
+   </body>
+</html>
