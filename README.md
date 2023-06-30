@@ -1,3 +1,4 @@
+![Screenshot](python-django-rest-framework.svg)
 # [OpenClassRoom](https://openclassrooms.com/) - Parcours développeur Python
 ![Screenshot](oc_parcours_dev_python.png)
 ## Projet 10 - Créer une API sécurisée RESTful en utilisant Django REST
@@ -61,7 +62,7 @@
 
 5. Populate a development dummy database and then run the application
 
-   Notice the 3 dummy users username: donald.duck, daisy.duck, loulou.duck. Default password is: applepie94 
+   Notice the 3 dummy users username: donald.duck, daisy.duck, loulou.duck. **Default password is:** applepie94 
 
       `python ./manage.py init_app_softdesk`
 
@@ -72,7 +73,7 @@
       `Illustration`
 ![Screenshot](oc_projet10_postman_doc.png)
 
-      `All run in a dvelopment environment`
+      `All run in a development environment`
 ![Screenshot](oc_projet10_postman_env_development.png)
 
 

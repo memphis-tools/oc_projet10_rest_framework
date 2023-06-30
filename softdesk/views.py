@@ -143,7 +143,6 @@ class ProjectsUserAPIView(APIView):
                     message = []
                     return Response(message, status=status.HTTP_403_FORBIDDEN)
             return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def post(self, request, pk, *args, **kwargs):
         try:
@@ -235,7 +234,6 @@ class ProjectsIssuesAPIView(APIView):
                     message = []
                     return Response(message, status=status.HTTP_403_FORBIDDEN)
             return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def post(self, request, pk, *args, **kwargs):
         args_dict = json.loads(request.body)
@@ -409,7 +407,6 @@ class ProjectsAPIView(APIView):
     info = ""
 
     def get_queryset(self, *args, **kwargs):
-        user = self.request.user
         contributions_queryset = (
             Contributors.objects
             .filter(Q(user_id__in=[self.request.user.id]))
@@ -426,7 +423,6 @@ class ProjectsAPIView(APIView):
                 queryset = Projects.objects.all()
                 serializer = ProjectListSerializer(queryset, many=True)
             else:
-                user = self.request.user
                 contributions_queryset = (
                     Contributors.objects
                     .filter(Q(user_id__in=[self.request.user.id]))
@@ -437,9 +433,15 @@ class ProjectsAPIView(APIView):
             return Response(serializer.data)
 
         else:
+            try:
+                project = Projects.objects.get(id=pk)
+            except ObjectDoesNotExistException:
+                return Response(status=status.HTTP_404_NOT_FOUND)
+
             if self.request.user.is_superuser:
-                queryset = Projects.objects.all()
-                serializer = ProjectDetailSerializer(queryset, many=True)
+                queryset = Projects.objects.get(id=pk)
+                serializer = ProjectDetailSerializer(queryset, many=False)
+                return Response(serializer.data)
             else:
                 user = self.request.user
                 contributions_queryset = (
@@ -447,14 +449,10 @@ class ProjectsAPIView(APIView):
                     .filter(Q(user_id__in=[self.request.user.id]))
                     .values_list('project_id')
                 )
-                project_id = pk
-                try:
-                    project = Projects.objects.get(id=project_id)
-                except ObjectDoesNotExistException:
-                    return Response(status=status.HTTP_404_NOT_FOUND)
+
                 projects_queryset = Projects.objects.filter(Q(id__in=contributions_queryset))
                 if project in projects_queryset:
-                    queryset = Projects.objects.get(id=project_id)
+                    queryset = Projects.objects.get(id=pk)
                     serializer = ProjectDetailSerializer(queryset, many=False)
                     return Response(serializer.data)
                 message = {}
@@ -513,5 +511,3 @@ class ProjectsAPIView(APIView):
             else:
                 message = {}
                 return Response(message, status=status.HTTP_403_FORBIDDEN)
-
-        return Response(status=status.HTTP_400_BAD_REQUEST)
