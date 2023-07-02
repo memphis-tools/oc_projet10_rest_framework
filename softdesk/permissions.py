@@ -134,20 +134,11 @@ class AssigneeUserIsContributor(BasePermission):
 class UserCanUpdateComment(BasePermission):
     def has_permission(self, request, view):
         user_id = request.user.id
-        project_id = request.resolver_match.kwargs['pk']
-        contributor_count = (
-            Contributors.objects
-            .filter(project_id=project_id)
-            .filter(user_id=user_id)
-            .filter(permission="AUTHOR").count()
-        )
         comment_id = request.resolver_match.kwargs['comment_id']
         comment = Comments.objects.get(id=comment_id)
         return bool(
             (
                 request.user and request.user.is_authenticated and comment.author_user_id.id == user_id
-            ) or (
-                contributor_count > 0
             ) or (
                 request.user and request.user.is_authenticated and request.user.is_superuser
             )
