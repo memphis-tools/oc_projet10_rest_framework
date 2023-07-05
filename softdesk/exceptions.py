@@ -1,2 +1,2 @@
-class ObjectDoesNotExistException(Exception):
+class UserProtectByRGPD(Exception):
     pass

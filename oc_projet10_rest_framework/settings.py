@@ -10,7 +10,7 @@ SECRET_KEY = '39bb83871ba702eca3303cedf50eacb1e9d2246cbe660b19ca1694c93b6b6b5c'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['192.168.1.5', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
@@ -112,4 +112,11 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': ['rest_framework_simplejwt.authentication.JWTAuthentication',],
     "USER_AUTHENTICATION_RULE": "rest_framework_simplejwt.authentication.default_user_authentication_rule",
     'DATETIME_FORMAT': "%d-%m-%Y %H:%M:%S",
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'PAGE_SIZE': 5
 }
+
+# Custom variables
+DATE_FORMAT = ['%d-%m-%Y']
+DATE_INPUT_FORMATS = ['%d-%m-%Y']
+RGPD_MIN_AGE = 16

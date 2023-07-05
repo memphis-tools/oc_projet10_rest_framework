@@ -1,9 +1,11 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
 from colorama import Fore, Style
+from datetime import date
 import subprocess
 import os
 import re
+import uuid
 
 from softdesk.models import Projects, Contributors, Issues, Comments
 
@@ -61,23 +63,35 @@ class Command(BaseCommand):
                 "username": "donald.duck",
                 "first_name": "donald",
                 "last_name": "duck",
-                "email": "donald.duck@bluelake.fr"
+                "birthdate": "2001-07-15",
+                "email": "donald.duck@bluelake.fr",
+                "has_parental_approvement": True,
+                "can_be_contacted": True,
+                "can_data_be_shared": True
             },
             {
                 "username": "daisy.duck",
                 "first_name": "daisy",
                 "last_name": "duck",
-                "email": "daisy.duck@bluelake.fr"
+                "birthdate": "2002-05-02",
+                "email": "daisy.duck@bluelake.fr",
+                "has_parental_approvement": True,
+                "can_be_contacted": True,
+                "can_data_be_shared": True
             },
             {
                 "username": "loulou.duck",
                 "first_name": "loulou",
                 "last_name": "duck",
-                "email": "loulou.duck@bluelake.fr"
+                "birthdate": "2015-10-11",
+                "email": "loulou.duck@bluelake.fr",
+                "has_parental_approvement": True,
+                "can_be_contacted": True,
+                "can_data_be_shared": False
             },
         ]
         print(f"{Fore.YELLOW}[DUMMY SUPERUSER CREATION]{Style.RESET_ALL}")
-        User.objects.create_superuser(SUPERUSER_NAME, SUPERUSER_EMAIL, SUPERUSER_PASSWORD)
+        User.objects.create_superuser(SUPERUSER_NAME, SUPERUSER_EMAIL, SUPERUSER_PASSWORD, birthdate="0001-01-01")
         print(f"{Fore.GREEN}[DUMMY SUPERUSER CREATED]{Style.RESET_ALL}")
         print(f"{Fore.YELLOW}[DUMMY USERS CREATION]{Style.RESET_ALL}")
         for user in users_list:
@@ -85,8 +99,12 @@ class Command(BaseCommand):
                 username=user["username"],
                 first_name=user["first_name"],
                 last_name=user["last_name"],
+                birthdate=user["birthdate"],
                 email=user["email"],
-                password="applepie94"
+                password="applepie94",
+                has_parental_approvement=user["has_parental_approvement"],
+                can_be_contacted=user["can_be_contacted"],
+                can_data_be_shared=user["can_data_be_shared"]
             )
         print(f"{Fore.GREEN}[DUMMY USERS CREATED]{Style.RESET_ALL}")
 
@@ -96,25 +114,25 @@ class Command(BaseCommand):
             {
                 "title": f"Un 1er projet test de {User.objects.get(id=2).first_name}",
                 "description": "bla bla bla",
-                "type": "front-end IOS",
+                "type": "front-end",
                 "author_user_id": 2
             },
             {
                 "title": f"Un 2eme projet test de {User.objects.get(id=2).first_name}",
                 "description": "bla bla bla",
-                "type": "back-end IOS",
+                "type": "back-end",
                 "author_user_id": 2
             },
             {
                 "title": f"Un 1er projet test de {User.objects.get(id=3).first_name}",
                 "description": "bla bla bla",
-                "type": "front-end Android",
+                "type": " Android",
                 "author_user_id": 3
             },
             {
                 "title": f"Un 3eme projet test de {User.objects.get(id=2).first_name}",
                 "description": "bla bla bla",
-                "type": "front-end Android",
+                "type": "IOS",
                 "author_user_id": 2
             },
         ]
@@ -131,11 +149,7 @@ class Command(BaseCommand):
             (Contributors.objects
                 .filter(project_id=preproject.id)
                 .filter(user_id=user.id)
-                .update(permission="AUTHOR"))
-            (Contributors.objects
-                .filter(project_id=preproject.id)
-                .filter(user_id=user.id)
-                .update(role="responsable projet"))
+                .update(role="AUTHOR"))
 
         print(f"{Fore.GREEN}[DUMMY PROJECTS CREATED]{Style.RESET_ALL}")
 
@@ -147,8 +161,7 @@ class Command(BaseCommand):
         Contributors.objects.create(
             user_id=user,
             project_id=project,
-            permission="CONTRIBUTOR",
-            role="contributeur projet"
+            role="CONTRIBUTOR",
         )
         # then we add user with id=4 to the project3 created by user with id=3
         user = User.objects.get(id=4)
@@ -156,8 +169,7 @@ class Command(BaseCommand):
         Contributors.objects.create(
             user_id=user,
             project_id=project,
-            permission="CONTRIBUTOR",
-            role="contributeur projet"
+            role="CONTRIBUTOR",
         )
         print(f"{Fore.GREEN}[DUMMY USERS ADDED]{Style.RESET_ALL}")
 
@@ -168,10 +180,10 @@ class Command(BaseCommand):
         Issues.objects.create(
             title="1er problème à propos de la fonction affichage facture",
             desc="Phasellus posuere ultricies urna nec molestie. Ut nec leo pretium purus a, bibendum nulla.",
-            tag="bug",
-            priority="élevée",
+            balise="BUG",
+            priority="HIGH",
             project_id=project,
-            status="à faire",
+            status="To Do",
             author_user_id=user_author,
             assignee_user_id=user_assignee
         )
@@ -181,10 +193,10 @@ class Command(BaseCommand):
         Issues.objects.create(
             title="1er problème à propos de la version Android du client",
             desc="Phasellus posuere ultricies urna nec molestie. Ut nec leo pretium, dapibus purus a, bibendum nulla.",
-            tag="amélioration",
-            priority="moyenne",
+            balise="FEATURE",
+            priority="MEDIUM",
             project_id=project,
-            status="en cours",
+            status="To Do",
             author_user_id=user_author,
             assignee_user_id=user_assignee
         )
@@ -195,6 +207,7 @@ class Command(BaseCommand):
         project = Projects.objects.get(id=1)
         user = User.objects.get(id=2)
         Comments.objects.create(
+            uuid = uuid.uuid4(),
             title="Dur comme 1ère tâche, bon courage",
             description="Aliquam eleifend mi sit amet ante maximus interdum. Fusce in diam euismod, scelerisque sem.",
             author_user_id=user,
@@ -204,6 +217,7 @@ class Command(BaseCommand):
         project = Projects.objects.get(id=3)
         user = User.objects.get(id=3)
         Comments.objects.create(
+            uuid = uuid.uuid4(),
             title="Parler de nouveau avec le client",
             description="Nulla facilisi. Duis sollicitudin nunc et tincidunt. Proin viverra ex ut est finibus ?",
             author_user_id=user,
@@ -213,6 +227,7 @@ class Command(BaseCommand):
         project = Projects.objects.get(id=3)
         user = User.objects.get(id=4)
         Comments.objects.create(
+            uuid = uuid.uuid4(),
             title="Besoin d'aide",
             description="Donec scelerisque ut magna vel auctor. Ut eu augue sit amet sapien eleifend feugiat sodales",
             author_user_id=user,
