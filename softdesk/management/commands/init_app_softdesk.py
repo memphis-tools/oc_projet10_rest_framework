@@ -1,7 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
 from colorama import Fore, Style
-from datetime import date
 import subprocess
 import os
 import re
@@ -207,7 +206,7 @@ class Command(BaseCommand):
         project = Projects.objects.get(id=1)
         user = User.objects.get(id=2)
         Comments.objects.create(
-            uuid = uuid.uuid4(),
+            uuid=uuid.uuid4(),
             title="Dur comme 1ère tâche, bon courage",
             description="Aliquam eleifend mi sit amet ante maximus interdum. Fusce in diam euismod, scelerisque sem.",
             author_user_id=user,
@@ -217,7 +216,7 @@ class Command(BaseCommand):
         project = Projects.objects.get(id=3)
         user = User.objects.get(id=3)
         Comments.objects.create(
-            uuid = uuid.uuid4(),
+            uuid=uuid.uuid4(),
             title="Parler de nouveau avec le client",
             description="Nulla facilisi. Duis sollicitudin nunc et tincidunt. Proin viverra ex ut est finibus ?",
             author_user_id=user,
@@ -227,7 +226,7 @@ class Command(BaseCommand):
         project = Projects.objects.get(id=3)
         user = User.objects.get(id=4)
         Comments.objects.create(
-            uuid = uuid.uuid4(),
+            uuid=uuid.uuid4(),
             title="Besoin d'aide",
             description="Donec scelerisque ut magna vel auctor. Ut eu augue sit amet sapien eleifend feugiat sodales",
             author_user_id=user,

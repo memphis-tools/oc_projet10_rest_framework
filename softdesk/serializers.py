@@ -1,5 +1,4 @@
 from django.conf import settings
-from django.contrib.auth.models import User
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
@@ -70,14 +69,6 @@ class ContributorUpdateSerializer(serializers.ModelSerializer):
                 f"Role {value} unknow. Authorized values: \
                     {Contributors.AUTHOR}, {Contributors.CONTRIBUTOR}"
             )
-        return value
-
-    def validate_role(self, value):
-        # roles possibles: admin, responsable projet, contributeur projet, auteur commentaire
-        if value not in ["AUTHOR", "CONTRIBUTOR"]:
-            raise serializers.ValidationError(
-                f"Role '{value}' unknow. Authorized values: \
-                AUTHOR, CONTRIBUTOR")
         return value
 
 
@@ -184,7 +175,7 @@ class UserUpdateContactSerializer(serializers.ModelSerializer):
         fields = ["can_be_contacted"]
 
     def validate_can_data_be_shared(self, instance):
-        if instance != True and instance != False:
+        if instance is not True and instance is not False:
             raise serializers.ValidationError({"can_be_contacted": "True/False expected"})
         return instance
 

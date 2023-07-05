@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from django.contrib.auth import get_user_model
 from rest_framework.views import APIView
-from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import generics
 from rest_framework import status
 from rest_framework.response import Response
@@ -14,7 +14,7 @@ import json
 import uuid
 
 from softdesk.permissions import UserCanUpdateProject, UserCanDeleteProject, UserCanDeleteProjects, \
-    UserCanViewProject, UserCanViewProjects, UserCanUpdateProjectUser, UserCanDeleteUserFromProject, \
+    UserCanViewProject, UserCanUpdateProjectUser, UserCanDeleteUserFromProject, \
     UserNotAlreadyInProject, AssigneeUserIsContributor, UserCanUpdateUser, UserCanViewUser, UserCanUpdateComment, \
     UserCanUpdateUserContactable, UserCanUpdateUserDataSharing, UserCanUpdateIssue, UserCanUpdateIssueStatus
 from softdesk.serializers import RegisterUserSerializer, UserListSerializer, UserDetailSerializer, \
@@ -87,11 +87,11 @@ class UsersAPIView(APIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
         if self.request.user.is_superuser:
             result_page = paginator.paginate_queryset(queryset, request)
-            serializer = UserListSerializer(result_page, many=True, context={'request':request})
+            serializer = UserListSerializer(result_page, many=True, context={'request': request})
         else:
             queryset = get_user_model().objects.filter(can_data_be_shared=True).exclude(id=1)
             result_page = paginator.paginate_queryset(queryset, request)
-            serializer = UserListSerializer(result_page, many=True, context={'request':request})
+            serializer = UserListSerializer(result_page, many=True, context={'request': request})
         return Response(serializer.data)
 
     @transaction.atomic
@@ -206,14 +206,14 @@ class ProjectsUsersAPIView(APIView):
             if self.request.user.is_superuser:
                 queryset = Contributors.objects.filter(project_id=pk)
                 result_page = paginator.paginate_queryset(queryset, request)
-                serializer = ContributorListSerializer(result_page, many=True, context={'request':request})
+                serializer = ContributorListSerializer(result_page, many=True, context={'request': request})
             else:
                 queryset = Contributors.objects.filter(project_id=pk)
                 if not queryset:
                     return Response(status=status.HTTP_404_NOT_FOUND)
                 if UserCanViewProject().has_permission(self.request, self, *args, **kwargs):
                     result_page = paginator.paginate_queryset(queryset, request)
-                    serializer = ContributorListSerializer(result_page, many=True, context={'request':request})
+                    serializer = ContributorListSerializer(result_page, many=True, context={'request': request})
                 else:
                     message = {}
                     return Response(message, status=status.HTTP_403_FORBIDDEN)
@@ -294,7 +294,7 @@ class IssuesRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
     def get_queryset(self, *args, **kwargs):
         return Issues.objects.all()
 
-    def put(self, request, pk, *args, **kwargs):
+    def put(self, request, pk, issue_id, *args, **kwargs):
         try:
             issue = Issues.objects.get(id=issue_id)
         except Exception:
@@ -333,11 +333,11 @@ class IssuesAPIView(APIView):
 
             if self.request.user.is_superuser:
                 result_page = paginator.paginate_queryset(queryset, request)
-                serializer = IssuesSerializer(result_page, many=True, context={'request':request})
+                serializer = IssuesSerializer(result_page, many=True, context={'request': request})
             else:
                 if UserCanViewProject().has_permission(self.request, self, *args, **kwargs):
                     result_page = paginator.paginate_queryset(queryset, request)
-                    serializer = IssuesSerializer(result_page, many=True, context={'request':request})
+                    serializer = IssuesSerializer(result_page, many=True, context={'request': request})
                 else:
                     message = {}
                     return Response(message, status=status.HTTP_403_FORBIDDEN)
@@ -441,11 +441,11 @@ class CommentsAPIView(APIView):
 
             if self.request.user.is_superuser:
                 result_page = paginator.paginate_queryset(queryset, request)
-                serializer = CommentListSerializer(result_page, many=True, context={'request':request})
+                serializer = CommentListSerializer(result_page, many=True, context={'request': request})
             else:
                 if UserCanViewProject().has_permission(self.request, self, *args, **kwargs):
                     result_page = paginator.paginate_queryset(queryset, request)
-                    serializer = CommentListSerializer(result_page, many=True, context={'request':request})
+                    serializer = CommentListSerializer(result_page, many=True, context={'request': request})
                 else:
                     message = {}
                     return Response(message, status=status.HTTP_403_FORBIDDEN)
@@ -476,7 +476,7 @@ class CommentsAPIView(APIView):
 
     def post(self, request, pk, issue_id, *args, **kwargs):
         args_dict = json.loads(request.body)
-        comment_uuid = f"uuid4()"
+        comment_uuid = f"{uuid.uuid4()}"
         try:
             Projects.objects.get(id=pk)
             issue_id = Issues.objects.get(id=issue_id)
@@ -558,7 +558,7 @@ class ProjectsAPIView(APIView):
             if self.request.user.is_superuser:
                 projects_queryset = Projects.objects.all()
                 result_page = paginator.paginate_queryset(projects_queryset, request)
-                serializer = ProjectListSerializer(result_page, many=True, context={'request':request})
+                serializer = ProjectListSerializer(result_page, many=True, context={'request': request})
             else:
                 contributions_queryset = (
                     Contributors.objects
@@ -567,7 +567,7 @@ class ProjectsAPIView(APIView):
                 )
                 projects_queryset = Projects.objects.filter(Q(id__in=contributions_queryset))
                 result_page = paginator.paginate_queryset(projects_queryset, request)
-                serializer = ProjectListSerializer(result_page, many=True, context={'request':request})
+                serializer = ProjectListSerializer(result_page, many=True, context={'request': request})
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         else:

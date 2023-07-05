@@ -1,10 +1,8 @@
 from rest_framework.permissions import BasePermission
 from django.db.models import Q
-from django.conf import settings
-from datetime import date
 
 from authentication.models import User
-from softdesk.models import Projects, Contributors, Comments
+from softdesk.models import Comments, Contributors, Projects, Issues
 
 
 class AssigneeUserIsContributor(BasePermission):
@@ -44,16 +42,6 @@ class UserCanViewProject(BasePermission):
         )
 
 
-class UserCanViewProjects(BasePermission):
-    def has_permission(self, request, view):
-        """
-        Description: on vérifie l'utilisateur peut consulter l'ensemble des projets.
-        """
-        return bool(
-            request.user and request.user.is_authenticated and request.user.is_superuser
-        )
-
-
 class UserCanViewUser(BasePermission):
     def has_permission(self, request, view):
         """
@@ -90,15 +78,14 @@ class UserCanUpdateUser(BasePermission):
         except Exception:
             return False
 
-        user_has_majority = User.has_rgpd_min_age(user.birthdate)
+        has_majority = User.has_rgpd_min_age(user.birthdate)
         return bool(
             (
-                request.user and request.user.is_authenticated and request_user_id == user_to_view_id and user_has_majority
+                request.user and request.user.is_authenticated and request_user_id == user_to_view_id and has_majority
             ) or (
                 request.user and request.user.is_authenticated and request.user.is_superuser
             )
         )
-
 
 
 class UserCanUpdateUserContactable(BasePermission):
@@ -136,10 +123,10 @@ class UserCanUpdateUserDataSharing(BasePermission):
         except Exception:
             return False
 
-        user_has_majority = User.has_rgpd_min_age(user.birthdate)
+        has_majority = User.has_rgpd_min_age(user.birthdate)
         return bool(
             (
-                request.user and request.user.is_authenticated and request_user_id == user_to_view_id and user_has_majority
+                request.user and request.user.is_authenticated and request_user_id == user_to_view_id and has_majority
             ) or (
                 request.user and request.user.is_authenticated and request.user.is_superuser
             )
@@ -248,7 +235,7 @@ class UserCanUpdateIssue(BasePermission):
         )
         return bool(
             (
-                request.user and request.user.is_authenticated and contributor_count > 0
+                request.user and request.user.is_authenticated and author_count > 0
             ) or (
                 request.user and request.user.is_authenticated and request.user.is_superuser
             )
@@ -269,7 +256,7 @@ class UserCanUpdateIssueStatus(BasePermission):
         )
         return bool(
             (
-                request.user and request.user.is_authenticated and contributor_count > 0
+                request.user and request.user.is_authenticated and issue_count > 0
             ) or (
                 request.user and request.user.is_authenticated and request.user.is_superuser
             )

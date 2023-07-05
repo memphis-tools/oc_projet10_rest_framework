@@ -30,7 +30,10 @@ urlpatterns = [
     path('projects/<int:pk>/users/<int:user_id>/', ProjectsUsersAPIView.as_view(), name='users_detail'),
     path('projects/<int:pk>/issues/', IssuesAPIView.as_view(), name='issues'),
     path('projects/<int:pk>/issues/<int:issue_id>/', IssuesAPIView.as_view(), name='issues_detail'),
-    path('projects/<int:pk>/issues/<int:issue_id>/change_status/', IssuesRetrieveUpdateAPIView.as_view(), name='issues_status'),
+    path(
+        'projects/<int:pk>/issues/<int:issue_id>/change_status/',
+        IssuesRetrieveUpdateAPIView.as_view(),
+        name='issues_status'),
     path(
         'projects/<int:pk>/issues/<int:issue_id>/comments/',
         CommentsAPIView.as_view(),
