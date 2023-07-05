@@ -203,7 +203,7 @@ class Command(BaseCommand):
         project = Projects.objects.get(id=3)
         Issues.objects.create(
             title="1er problème à propos de la version Android du client",
-            description="Phasellus posuere ultricies urna nec molestie. Ut nec leo pretium, dapibus purus a, bibendum nulla.",
+            description="Phasellus posuere ultricies urna nec molestie. Ut leo pretium, dapibus purus a, bibendum.",
             balise="FEATURE",
             priority="MEDIUM",
             project_id=project,

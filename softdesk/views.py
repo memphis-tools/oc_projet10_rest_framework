@@ -322,7 +322,7 @@ class IssuesAPIView(APIView):
     """
     Description: dédiée à permettre l'ajout, la consultation, modification ou suppression d'un problème.
     """
-    permission_classes = [IsAuthenticated | UserCanCreateIssue| UserCanUpdateIssue]
+    permission_classes = [IsAuthenticated | UserCanCreateIssue | UserCanUpdateIssue]
     serializer_class = IssuesSerializer
 
     def get_queryset(self, *args, **kwargs):
