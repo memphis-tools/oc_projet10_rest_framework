@@ -154,17 +154,29 @@ class Command(BaseCommand):
 
         print(f"{Fore.YELLOW}[ADDING DUMMY USERS TO DUMMY PROJECTS]{Style.RESET_ALL}")
         # keep in mind that user 1 is the default admin
-        # first we add user with id=3 to the project1 created by user with id=2
+        # the expected process is that a project author is also a contributor so first we add it
+        # then we add user with id=3 to the project1 created by user with id=2
         user = User.objects.get(id=3)
         project = Projects.objects.get(id=1)
+        Contributors.objects.create(
+            user_id=User.objects.get(id=2),
+            project_id=project,
+            role="CONTRIBUTOR",
+        )
         Contributors.objects.create(
             user_id=user,
             project_id=project,
             role="CONTRIBUTOR",
         )
+        # the expected process is that a project author is also a contributor so first we add it
         # then we add user with id=4 to the project3 created by user with id=3
         user = User.objects.get(id=4)
         project = Projects.objects.get(id=3)
+        Contributors.objects.create(
+            user_id=User.objects.get(id=3),
+            project_id=project,
+            role="CONTRIBUTOR",
+        )
         Contributors.objects.create(
             user_id=user,
             project_id=project,
@@ -178,7 +190,7 @@ class Command(BaseCommand):
         project = Projects.objects.get(id=1)
         Issues.objects.create(
             title="1er problème à propos de la fonction affichage facture",
-            desc="Phasellus posuere ultricies urna nec molestie. Ut nec leo pretium purus a, bibendum nulla.",
+            description="Phasellus posuere ultricies urna nec molestie. Ut nec leo pretium purus a, bibendum nulla.",
             balise="BUG",
             priority="HIGH",
             project_id=project,
@@ -191,7 +203,7 @@ class Command(BaseCommand):
         project = Projects.objects.get(id=3)
         Issues.objects.create(
             title="1er problème à propos de la version Android du client",
-            desc="Phasellus posuere ultricies urna nec molestie. Ut nec leo pretium, dapibus purus a, bibendum nulla.",
+            description="Phasellus posuere ultricies urna nec molestie. Ut nec leo pretium, dapibus purus a, bibendum nulla.",
             balise="FEATURE",
             priority="MEDIUM",
             project_id=project,

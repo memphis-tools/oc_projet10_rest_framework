@@ -14,7 +14,7 @@ import json
 import uuid
 
 from softdesk.permissions import UserCanUpdateProject, UserCanDeleteProject, UserCanDeleteProjects, \
-    UserCanViewProject, UserCanUpdateProjectUser, UserCanDeleteUserFromProject, \
+    UserCanViewProject, UserCanUpdateProjectUser, UserCanDeleteUserFromProject, UserCanCreateIssue, \
     UserNotAlreadyInProject, AssigneeUserIsContributor, UserCanUpdateUser, UserCanViewUser, UserCanUpdateComment, \
     UserCanUpdateUserContactable, UserCanUpdateUserDataSharing, UserCanUpdateIssue, UserCanUpdateIssueStatus
 from softdesk.serializers import RegisterUserSerializer, UserListSerializer, UserDetailSerializer, \
@@ -99,10 +99,13 @@ class UsersAPIView(APIView):
         users = get_user_model().objects.filter(id__gte=2)
         if not users:
             return Response(status=status.HTTP_404_NOT_FOUND)
-        users.delete()
-        issues = Issues.objects.all()
-        issues.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        if self.request.user.is_superuser:
+            users.delete()
+            issues = Issues.objects.all()
+            issues.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        else:
+            return Response(status=status.HTTP_403_FORBIDDEN)
 
 
 class UserUpdateContactGenericsAPIView(generics.UpdateAPIView):
@@ -126,6 +129,7 @@ class UserUpdateContactGenericsAPIView(generics.UpdateAPIView):
             if serializer.is_valid():
                 user.can_be_contacted = request.data['can_be_contacted']
                 user.save()
+                print(f"[DEBUG] user can_be_contacted is now eqquals to: {user.can_be_contacted}")
                 return Response(serializer.data)
         else:
             return Response(serializer.errors, status=status.HTTP_403_FORBIDDEN)
@@ -202,13 +206,13 @@ class ProjectsUsersAPIView(APIView):
     def get(self, request, pk=None, user_id=None, *args, **kwargs):
         serializer = ProjectListSerializer()
         paginator = LimitOffsetPagination()
-        if user_id is None:
+        if pk is None:
             if self.request.user.is_superuser:
-                queryset = Contributors.objects.filter(project_id=pk)
+                queryset = Contributors.objects.all()
                 result_page = paginator.paginate_queryset(queryset, request)
                 serializer = ContributorListSerializer(result_page, many=True, context={'request': request})
             else:
-                queryset = Contributors.objects.filter(project_id=pk)
+                queryset = Contributors.objects.all()
                 if not queryset:
                     return Response(status=status.HTTP_404_NOT_FOUND)
                 if UserCanViewProject().has_permission(self.request, self, *args, **kwargs):
@@ -220,15 +224,14 @@ class ProjectsUsersAPIView(APIView):
             return Response(serializer.data)
         else:
             try:
-                queryset = Contributors.objects.get(project_id=pk)
+                queryset = Contributors.objects.filter(project_id=pk)
             except Exception:
                 return Response(status=status.HTTP_404_NOT_FOUND)
 
             if self.request.user.is_superuser:
-                serializer = ProjectDetailSerializer(queryset, many=True)
+                serializer = ContributorListSerializer(queryset, many=True)
             else:
                 if UserCanViewProject().has_permission(self.request, self, *args, **kwargs):
-                    queryset = Contributors.objects.filter(project_id=pk).filter(user_id=user_id)
                     serializer = ContributorListSerializer(queryset, many=True)
                 else:
                     message = []
@@ -240,6 +243,7 @@ class ProjectsUsersAPIView(APIView):
             Projects.objects.get(id=pk)
         except Exception:
             return Response(status=status.HTTP_404_NOT_FOUND)
+
         if UserNotAlreadyInProject().has_permission(self.request, self, *args, **kwargs):
             if UserCanUpdateProject().has_permission(self.request, self, *args, **kwargs):
                 if UserCanUpdateProjectUser().has_permission(self.request, self, *args, **kwargs):
@@ -249,6 +253,9 @@ class ProjectsUsersAPIView(APIView):
                     except Exception:
                         return Response(status=status.HTTP_404_NOT_FOUND)
 
+                    if not user.can_be_contacted:
+                        message = {"message": "utilisateur n'est plus disponible actuellement"}
+                        return Response(message, status=status.HTTP_403_FORBIDDEN)
                     request.data["project_id"] = pk
                     request.data["user_id"] = user.id
                     request.data["role"] = "CONTRIBUTOR"
@@ -315,7 +322,7 @@ class IssuesAPIView(APIView):
     """
     Description: dédiée à permettre l'ajout, la consultation, modification ou suppression d'un problème.
     """
-    permission_classes = [IsAuthenticated | UserCanUpdateIssue]
+    permission_classes = [IsAuthenticated | UserCanCreateIssue| UserCanUpdateIssue]
     serializer_class = IssuesSerializer
 
     def get_queryset(self, *args, **kwargs):
@@ -365,7 +372,7 @@ class IssuesAPIView(APIView):
         except Exception:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
-        if UserCanUpdateProject().has_permission(self.request, self, *args, **kwargs):
+        if UserCanCreateIssue().has_permission(self.request, self, *args, **kwargs):
             if AssigneeUserIsContributor().has_permission(self.request, self, *args, **kwargs):
                 assignee_user_id = args_dict.pop("assignee_user_id")
                 user = get_user_model().objects.get(id=assignee_user_id)
@@ -524,7 +531,7 @@ class CommentsAPIView(APIView):
         except Exception:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
-        if UserCanUpdateProject().has_permission(self.request, self, *args, **kwargs):
+        if UserCanViewProject().has_permission(self.request, self, *args, **kwargs):
             if UserCanUpdateComment().has_permission(self.request, self, *args, **kwargs):
                 comment.delete()
                 return Response(status=status.HTTP_204_NO_CONTENT)
@@ -569,7 +576,6 @@ class ProjectsAPIView(APIView):
                 result_page = paginator.paginate_queryset(projects_queryset, request)
                 serializer = ProjectListSerializer(result_page, many=True, context={'request': request})
             return Response(serializer.data, status=status.HTTP_200_OK)
-
         else:
             try:
                 project = Projects.objects.get(id=pk)

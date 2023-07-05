@@ -238,34 +238,13 @@ class IssueMixin:
 class IssueSerializer(IssueMixin, serializers.ModelSerializer):
     class Meta:
         model = Issues
-        fields = ["title", "desc", "balise", "priority", "assignee_user_id"]
+        fields = ["title", "description", "status", "balise", "priority", "assignee_user_id"]
 
 
 class IssuesSerializer(IssueMixin, serializers.ModelSerializer):
     class Meta:
         model = Issues
         fields = "__all__"
-
-    # def validate_balise(self, value):
-    #     # balises possibles: bug, tâche, amélioration
-    #     if value not in ["BUG", "TASK", "FEATURE"]:
-    #         raise serializers.ValidationError(
-    #             f"Balise '{value}' unknow. Authorized values: BUG, TASK, FEATURE")
-    #     return value
-    #
-    # def validate_priority(self, value):
-    #     # priorité possible: faible, moyenne, élevée
-    #     if value not in ["LOW", "MEDIUM", "HIGH"]:
-    #         raise serializers.ValidationError(
-    #             f"Priority '{value}' unknow. Authorized values: LOW, MEDIUM, HIGH")
-    #     return value
-    #
-    # def validate_status(self, value):
-    #     # status possibles: à faire, en cours ou terminé
-    #     if value not in ["To Do", "In Progress", "Finished"]:
-    #         raise serializers.ValidationError(
-    #             f"Status '{value}' unknow. Authorized values: To Do, In Progress, Finished")
-    #     return value
 
 
 class CommentMixin:

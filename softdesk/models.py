@@ -17,7 +17,7 @@ class Projects(models.Model):
 
 class Issues(models.Model):
     title = models.CharField(max_length=200, null=False, blank=False)
-    desc = models.TextField(max_length=1850, null=False, blank=False)
+    description = models.TextField(max_length=1850, null=False, blank=False)
     # balise possibles: BUG, TASK, FEATURE
     balise = models.CharField(max_length=25, null=False, blank=False)
     # priorité possible: LOW, MEDIUM, HIGH

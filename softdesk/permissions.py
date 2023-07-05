@@ -33,6 +33,11 @@ class UserCanViewProject(BasePermission):
         project_contributions_count = Contributors.objects.filter(Q(user_id__in=[request.user.id])).count()
         user_id = request.user.id
         contributor_count = Contributors.objects.filter(project_id=project_id).filter(user_id=user_id).count()
+        try:
+            project = Projects.objects.get(id=project_id)
+        except Exception:
+            return "Project not found"
+
         return bool(
             (
                 request.user and request.user.is_authenticated and contributor_count > 0
@@ -139,13 +144,14 @@ class UserNotAlreadyInProject(BasePermission):
         Description: on vérifie si l'utilisateur ajouté à un projet, n'y est pas déjà inscrit.
         """
         project_id = request.resolver_match.kwargs['pk']
-        user_id = request.user.id
+        contributor_id = request.data["contributor_id"]
         contributor_count = (
             Contributors.objects
             .filter(project_id=project_id)
-            .filter(user_id=user_id)
+            .filter(user_id=contributor_id)
             .filter(role="CONTRIBUTOR").count()
         )
+
         return bool(
             request.user and request.user.is_authenticated and contributor_count == 0
         )
@@ -158,15 +164,16 @@ class UserCanDeleteProject(BasePermission):
         """
         project_id = request.resolver_match.kwargs['pk']
         user_id = request.user.id
-        contributor_count = (
+        author_count = (
             Contributors.objects
             .filter(project_id=project_id)
             .filter(user_id=user_id)
             .filter(role="AUTHOR").count()
         )
+
         return bool(
             (
-                request.user and request.user.is_authenticated and contributor_count > 0
+                request.user and request.user.is_authenticated and author_count > 0
             ) or (
                 request.user and request.user.is_authenticated and request.user.is_superuser
             )
@@ -198,6 +205,7 @@ class UserCanDeleteUserFromProject(BasePermission):
             .filter(user_id=user_to_remove)
             .filter(role="CONTRIBUTOR").count()
         )
+
         return bool(
             request.user and request.user.is_authenticated and contributor_count > 0
         )
@@ -211,6 +219,7 @@ class UserCanUpdateComment(BasePermission):
         user_id = request.user.id
         comment_id = request.resolver_match.kwargs['comment_id']
         comment = Comments.objects.get(id=comment_id)
+
         return bool(
             (
                 request.user and request.user.is_authenticated and comment.author_user_id.id == user_id
@@ -230,9 +239,9 @@ class UserCanUpdateIssue(BasePermission):
         author_count = (
             Issues.objects
             .filter(id=issue_id)
-            .filter(author_user_id=user_id)
-            .filter(role="AUTHOR").count()
+            .filter(author_user_id=user_id).count()
         )
+
         return bool(
             (
                 request.user and request.user.is_authenticated and author_count > 0
@@ -254,9 +263,32 @@ class UserCanUpdateIssueStatus(BasePermission):
             .filter(id=issue_id)
             .filter(assignee_user_id=user_id).count()
         )
+
         return bool(
             (
                 request.user and request.user.is_authenticated and issue_count > 0
+            ) or (
+                request.user and request.user.is_authenticated and request.user.is_superuser
+            )
+        )
+
+
+class UserCanCreateIssue(BasePermission):
+    def has_permission(self, request, view):
+        """
+        Description: on vérifie si l'utilisateur peut ajouter un problème à un projet.
+        """
+        project_id = request.resolver_match.kwargs['pk']
+        user_id = request.user.id
+        contributor_count = (
+            Contributors.objects
+            .filter(project_id=project_id)
+            .filter(user_id=user_id)
+        ).count()
+
+        return bool(
+            (
+                request.user and request.user.is_authenticated and contributor_count > 0
             ) or (
                 request.user and request.user.is_authenticated and request.user.is_superuser
             )
@@ -270,15 +302,16 @@ class UserCanUpdateProject(BasePermission):
         """
         project_id = request.resolver_match.kwargs['pk']
         user_id = request.user.id
-        contributor_count = (
+        author_count = (
             Contributors.objects
             .filter(project_id=project_id)
             .filter(user_id=user_id)
             .filter(role="AUTHOR").count()
         )
+
         return bool(
             (
-                request.user and request.user.is_authenticated and contributor_count > 0
+                request.user and request.user.is_authenticated and author_count > 0
             ) or (
                 request.user and request.user.is_authenticated and request.user.is_superuser
             )
@@ -292,6 +325,7 @@ class UserCanUpdateProjectUser(BasePermission):
         """
         user_id = request.user.id
         user = User.objects.get(id=user_id)
+
         return bool(
             (
                 request.user and request.user.is_authenticated and user.can_be_contacted
