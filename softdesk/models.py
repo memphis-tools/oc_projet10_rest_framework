@@ -12,18 +12,19 @@ class Projects(models.Model):
         get_user_model(),
         through='Contributors',
     )
+    created_time = models.DateTimeField(default=now)
 
 
 class Issues(models.Model):
     title = models.CharField(max_length=200, null=False, blank=False)
-    desc = models.TextField(max_length=1850, null=False, blank=False)
-    # tags possibles: bug, tâche, amélioration
-    tag = models.CharField(max_length=25, null=False, blank=False)
-    # priorité possible: faible, moyenne, élevée
+    description = models.TextField(max_length=1850, null=False, blank=False)
+    # balise possibles: BUG, TASK, FEATURE
+    balise = models.CharField(max_length=25, null=False, blank=False)
+    # priorité possible: LOW, MEDIUM, HIGH
     priority = models.CharField(max_length=25, null=False, blank=False)
     project_id = models.ForeignKey(Projects, on_delete=models.CASCADE)
-    # status possibles: à faire, en cours ou terminé
-    status = models.CharField(max_length=30, null=False, blank=False)
+    # status possibles: To Do, In Progress ou Finished
+    status = models.CharField(max_length=30, default="To Do", null=False, blank=False)
     author_user_id = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, null=True)
     assignee_user_id = models.ForeignKey(
         get_user_model(),
@@ -35,6 +36,7 @@ class Issues(models.Model):
 
 
 class Comments(models.Model):
+    uuid = models.UUIDField(null=False)
     title = models.CharField(max_length=200, null=False, blank=False)
     description = models.TextField(max_length=1850, null=False, blank=False)
     author_user_id = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
@@ -51,9 +53,8 @@ class Contributors(models.Model):
     ]
     user_id = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     project_id = models.ForeignKey(Projects, on_delete=models.CASCADE)
-    permission = models.CharField(max_length=20, choices=PERMISSION_CHOICES)
-    # roles possibles: admin, responsable projet, contributeur projet, auteur commentaire
-    role = models.CharField(max_length=25, verbose_name='role')
+    role = models.CharField(max_length=20, choices=PERMISSION_CHOICES, verbose_name='role')
+    created_time = models.DateTimeField(default=now)
 
     class Meta:
-        unique_together = ('user_id', 'project_id', 'permission', 'role')
+        unique_together = ('user_id', 'project_id', 'role')
