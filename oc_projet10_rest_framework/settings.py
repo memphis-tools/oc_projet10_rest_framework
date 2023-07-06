@@ -103,9 +103,10 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'authentication.User'
 
+# https://github.com/jazzband/djangorestframework-simplejwt/blob/master/rest_framework_simplejwt/settings.py
 SIMPLE_JWT = {
-    'TOKEN_ACCESS_LIFETIME': timedelta(minutes=1),
-    'TOKEN_REFRESH_LIFETIME': timedelta(days=1)
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
 }
 
 REST_FRAMEWORK = {
