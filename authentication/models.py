@@ -18,17 +18,28 @@ class User(AbstractUser):
                 return False
         return True
 
-    # We consider that an user which can be contacted, can be add to a project
+    # Due to European RGPD and the use of this app we must obtain explicit consentment for
+    # collecting data for a minor.
+    general_cnil_approvment = models.BooleanField()
+
+    # Due to European RGPD and the use of this app we must propose User if we want to be
+    # contacted or not
     can_be_contacted = models.BooleanField(default=True)
-    # We consider that an user whose datas can be shared, has a consultable profit ny any user connected.
-    # Because of European RGPD any user younger than 16 can not be consultable by anybody but the admin.
+
+    # Due to European RGPD and the use of this app we must propose User if we can share
+    # his data
     can_data_be_shared = models.BooleanField(default=True)
-    birthdate = models.DateField(null=False)
+
     # When user subscribes he will have to fullfill his birthdate. We will then establish his /her age.
     # Because of European RGPD any user younger than 16 will need a parental approvement to participate.
     # In a development perspective we auto agree the parental approvement.
     # In a production perspective you must setup a parental approvement mecanism through the RegisterUserSerializer.
+    birthdate = models.DateField(null=False)
     has_parental_approvement = models.BooleanField(default=True)
+    # We consider that an user can decide to stay active but not add to any more project.
+    can_contribute_to_a_project = models.BooleanField(default=True)
+    # We consider that an user can decide that his profile details could not be seen by other users.
+    can_profile_viewable = models.BooleanField(default=True)
     created_time = models.DateTimeField(default=now)
     projects_contributions_ids = models.ManyToManyField(
         'softdesk.Projects',

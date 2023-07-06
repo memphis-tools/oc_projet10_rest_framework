@@ -16,9 +16,9 @@ import uuid
 from softdesk.permissions import UserCanUpdateProject, UserCanDeleteProject, UserCanDeleteProjects, \
     UserCanViewProject, UserCanUpdateProjectUser, UserCanDeleteUserFromProject, UserCanCreateIssue, \
     UserNotAlreadyInProject, AssigneeUserIsContributor, UserCanUpdateUser, UserCanViewUser, UserCanUpdateComment, \
-    UserCanUpdateUserContactable, UserCanUpdateUserDataSharing, UserCanUpdateIssue, UserCanUpdateIssueStatus
+    UserCanUpdateIssue, UserCanUpdateIssueStatus
 from softdesk.serializers import RegisterUserSerializer, UserListSerializer, UserDetailSerializer, \
-    UserUpdatePasswordSerializer, UserUpdateContactSerializer, UserUpdateDataSharingSerializer, \
+    UserUpdateSerializer, UserUpdatePasswordSerializer, \
     ProjectDetailSerializer, ProjectListSerializer, IssueSerializer, IssuesSerializer, \
     CommentListSerializer, CommentDetailSerializer, CommentUpdateSerializer, \
     ContributorUpdateSerializer, ContributorListSerializer
@@ -43,6 +43,24 @@ class UserAPIView(APIView):
             return Response(serializer.data)
         message = {}
         return Response(message, status=status.HTTP_403_FORBIDDEN)
+
+    def put(self, request, pk, *args, **kwargs):
+        try:
+            user = get_user_model().objects.get(id=pk)
+        except Exception:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        serializer = UserUpdateSerializer(user, data=request.data, partial=True)
+        if UserCanUpdateUser().has_permission(self.request, self, *args, **kwargs):
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+        message = {}
+        return Response(message, status=status.HTTP_400_BAD_REQUEST)
 
     @transaction.atomic
     def delete(self, request, pk, *args, **kwargs):
@@ -89,7 +107,7 @@ class UsersAPIView(APIView):
             result_page = paginator.paginate_queryset(queryset, request)
             serializer = UserListSerializer(result_page, many=True, context={'request': request})
         else:
-            queryset = get_user_model().objects.filter(can_data_be_shared=True).exclude(id=1)
+            queryset = get_user_model().objects.filter(can_profile_viewable=True).exclude(id=1)
             result_page = paginator.paginate_queryset(queryset, request)
             serializer = UserListSerializer(result_page, many=True, context={'request': request})
         return Response(serializer.data)
@@ -106,64 +124,6 @@ class UsersAPIView(APIView):
             return Response(status=status.HTTP_204_NO_CONTENT)
         else:
             return Response(status=status.HTTP_403_FORBIDDEN)
-
-
-class UserUpdateContactGenericsAPIView(generics.UpdateAPIView):
-    """
-    Description: dédiée à permettre à un utilisateur de s'indiquer disponible à joindre un projet.
-    """
-    permission_classes = [IsAuthenticated, UserCanUpdateUserContactable]
-    serializer_class = UserUpdateDataSharingSerializer
-
-    def get_queryset(self, *args, **kwargs):
-        return User.objects.all()
-
-    def put(self, request, pk, *args, **kwargs):
-        try:
-            user = get_user_model().objects.get(id=pk)
-        except Exception:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-
-        serializer = UserUpdateContactSerializer(data=request.data, partial=True)
-        if UserCanUpdateUserContactable().has_permission(self.request, self, *args, **kwargs):
-            if serializer.is_valid():
-                user.can_be_contacted = request.data['can_be_contacted']
-                user.save()
-                print(f"[DEBUG] user can_be_contacted is now eqquals to: {user.can_be_contacted}")
-                return Response(serializer.data)
-        else:
-            return Response(serializer.errors, status=status.HTTP_403_FORBIDDEN)
-        message = {}
-        print(f"[DEBUG] serializer=={serializer}")
-        return Response(message, status=status.HTTP_400_BAD_REQUEST)
-
-
-class UserUpdateDataSharingGenericsAPIView(generics.UpdateAPIView):
-    """
-    Description: dédiée à permettre à un utilisateur de partager ou non son profile aux autres utilisateurs connectés.
-    """
-    permission_classes = [IsAuthenticated, UserCanUpdateUserDataSharing]
-    serializer_class = UserUpdateDataSharingSerializer
-
-    def get_queryset(self, *args, **kwargs):
-        return User.objects.all()
-
-    def put(self, request, pk, *args, **kwargs):
-        try:
-            user = get_user_model().objects.get(id=pk)
-        except Exception:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-
-        serializer = UserUpdateDataSharingSerializer(user, data=request.data, partial=True)
-        if UserCanUpdateUserDataSharing().has_permission(self.request, self, *args, **kwargs):
-            if serializer.is_valid():
-                user.can_data_be_shared = request.data['can_data_be_shared']
-                user.save()
-                return Response(serializer.data)
-        else:
-            return Response(serializer.errors, status=status.HTTP_403_FORBIDDEN)
-        message = {}
-        return Response(message, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserUpdatePasswordGenericsAPIView(generics.UpdateAPIView):
@@ -253,8 +213,8 @@ class ProjectsUsersAPIView(APIView):
                     except Exception:
                         return Response(status=status.HTTP_404_NOT_FOUND)
 
-                    if not user.can_be_contacted:
-                        message = {"message": "utilisateur n'est plus disponible actuellement"}
+                    if not user.can_contribute_to_a_project:
+                        message = {"message": "user is no more available as a contributor"}
                         return Response(message, status=status.HTTP_403_FORBIDDEN)
                     request.data["project_id"] = pk
                     request.data["user_id"] = user.id
@@ -376,6 +336,9 @@ class IssuesAPIView(APIView):
             if AssigneeUserIsContributor().has_permission(self.request, self, *args, **kwargs):
                 assignee_user_id = args_dict.pop("assignee_user_id")
                 user = get_user_model().objects.get(id=assignee_user_id)
+                if not user.can_contribute_to_a_project:
+                    message = {"message": "user is no more available as a contributor"}
+                    return Response(message, status=status.HTTP_403_FORBIDDEN)
                 author_user_id = request.user
                 args_dict["project_id"] = project.id
                 args_dict["assignee_user_id"] = user.id

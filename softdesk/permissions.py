@@ -64,7 +64,7 @@ class UserCanViewUser(BasePermission):
             (
                 request.user and request.user.is_authenticated and request_user_id == user_to_view_id
             ) or (
-                request.user and user_to_view.can_data_be_shared
+                request.user and user_to_view.can_profile_viewable
             ) or (
                 request.user and request.user.is_authenticated and request.user.is_superuser
             )
@@ -83,55 +83,9 @@ class UserCanUpdateUser(BasePermission):
         except Exception:
             return False
 
-        has_majority = User.has_rgpd_min_age(user.birthdate)
-        return bool(
-            (
-                request.user and request.user.is_authenticated and request_user_id == user_to_view_id and has_majority
-            ) or (
-                request.user and request.user.is_authenticated and request.user.is_superuser
-            )
-        )
-
-
-class UserCanUpdateUserContactable(BasePermission):
-    def has_permission(self, request, view):
-        """
-        Description: on vérifie si l'utilisateur peut modifier son attribut 'can_be_contacted'.
-        L'attribut donne ou non la possibilité d'être ajouté à un nouveau projet.
-        """
-        request_user_id = request.user.id
-        user_to_view_id = request.resolver_match.kwargs['pk']
-        try:
-            user = User.objects.get(id=user_to_view_id)
-        except Exception:
-            return False
-
         return bool(
             (
                 request.user and request.user.is_authenticated and request_user_id == user_to_view_id
-            ) or (
-                request.user and request.user.is_authenticated and request.user.is_superuser
-            )
-        )
-
-
-class UserCanUpdateUserDataSharing(BasePermission):
-    def has_permission(self, request, view):
-        """
-        Description: on vérifie si l'utilisateur peut modifier son attribut 'can_data_be_shared'.
-        L'attribut donne ou non la possibilité d'avoir un profil utilisateur consultable.
-        """
-        request_user_id = request.user.id
-        user_to_view_id = request.resolver_match.kwargs['pk']
-        try:
-            user = User.objects.get(id=user_to_view_id)
-        except Exception:
-            return False
-
-        has_majority = User.has_rgpd_min_age(user.birthdate)
-        return bool(
-            (
-                request.user and request.user.is_authenticated and request_user_id == user_to_view_id and has_majority
             ) or (
                 request.user and request.user.is_authenticated and request.user.is_superuser
             )
@@ -328,7 +282,7 @@ class UserCanUpdateProjectUser(BasePermission):
 
         return bool(
             (
-                request.user and request.user.is_authenticated and user.can_be_contacted
+                request.user and request.user.is_authenticated and user.can_contribute_to_a_project
             ) or (
                 request.user and request.user.is_authenticated and request.user.is_superuser
             )

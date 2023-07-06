@@ -64,9 +64,9 @@ class Command(BaseCommand):
                 "last_name": "duck",
                 "birthdate": "2001-07-15",
                 "email": "donald.duck@bluelake.fr",
-                "has_parental_approvement": True,
-                "can_be_contacted": True,
-                "can_data_be_shared": True
+                "general_cnil_approvment": True,
+                "can_contribute_to_a_project": True,
+                "can_profile_viewable": True
             },
             {
                 "username": "daisy.duck",
@@ -74,9 +74,9 @@ class Command(BaseCommand):
                 "last_name": "duck",
                 "birthdate": "2002-05-02",
                 "email": "daisy.duck@bluelake.fr",
-                "has_parental_approvement": True,
-                "can_be_contacted": True,
-                "can_data_be_shared": True
+                "general_cnil_approvment": True,
+                "can_contribute_to_a_project": True,
+                "can_profile_viewable": True
             },
             {
                 "username": "loulou.duck",
@@ -85,12 +85,20 @@ class Command(BaseCommand):
                 "birthdate": "2015-10-11",
                 "email": "loulou.duck@bluelake.fr",
                 "has_parental_approvement": True,
+                "general_cnil_approvment": True,
                 "can_be_contacted": True,
-                "can_data_be_shared": False
+                "can_data_be_shared": True,
+                "can_contribute_to_a_project": True,
+                "can_profile_viewable": False
             },
         ]
         print(f"{Fore.YELLOW}[DUMMY SUPERUSER CREATION]{Style.RESET_ALL}")
-        User.objects.create_superuser(SUPERUSER_NAME, SUPERUSER_EMAIL, SUPERUSER_PASSWORD, birthdate="0001-01-01")
+        User.objects.create_superuser(SUPERUSER_NAME,
+                                        SUPERUSER_EMAIL,
+                                        SUPERUSER_PASSWORD,
+                                        birthdate="0001-01-01",
+                                        general_cnil_approvment=True
+        )
         print(f"{Fore.GREEN}[DUMMY SUPERUSER CREATED]{Style.RESET_ALL}")
         print(f"{Fore.YELLOW}[DUMMY USERS CREATION]{Style.RESET_ALL}")
         for user in users_list:
@@ -101,9 +109,9 @@ class Command(BaseCommand):
                 birthdate=user["birthdate"],
                 email=user["email"],
                 password="applepie94",
-                has_parental_approvement=user["has_parental_approvement"],
-                can_be_contacted=user["can_be_contacted"],
-                can_data_be_shared=user["can_data_be_shared"]
+                general_cnil_approvment=user["general_cnil_approvment"],
+                can_contribute_to_a_project=user["can_contribute_to_a_project"],
+                can_profile_viewable=user["can_profile_viewable"]
             )
         print(f"{Fore.GREEN}[DUMMY USERS CREATED]{Style.RESET_ALL}")
 

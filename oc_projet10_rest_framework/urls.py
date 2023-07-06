@@ -4,7 +4,6 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from softdesk.views import ProjectsAPIView, \
     UserRegisterGenericsAPIView, UsersAPIView, UserAPIView, UserUpdatePasswordGenericsAPIView, \
-    UserUpdateContactGenericsAPIView, UserUpdateDataSharingGenericsAPIView, \
     ProjectsUsersAPIView, IssuesAPIView, IssuesRetrieveUpdateAPIView, CommentsAPIView
 
 
@@ -13,16 +12,6 @@ urlpatterns = [
     path('signup/', UserRegisterGenericsAPIView.as_view(), name='signup'),
     path('users/', UsersAPIView.as_view(), name='users'),
     path('users/<int:pk>/', UserAPIView.as_view(), name='users_detail'),
-    path(
-        'users/<int:pk>/change_contact/',
-        UserUpdateContactGenericsAPIView.as_view(),
-        name='change_contact'
-    ),
-    path(
-        'users/<int:pk>/change_data_sharing/',
-        UserUpdateDataSharingGenericsAPIView.as_view(),
-        name='change_data_sharing'
-    ),
     path('users/<int:pk>/change_password/', UserUpdatePasswordGenericsAPIView.as_view(), name='change_password'),
     path('projects/', ProjectsAPIView.as_view(), name='projects'),
     path('projects/<int:pk>/', ProjectsAPIView.as_view(), name='projects_detail'),

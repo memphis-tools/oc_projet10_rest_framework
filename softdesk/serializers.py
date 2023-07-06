@@ -11,7 +11,6 @@ from softdesk.exceptions import UserProtectByRGPD
 
 class ProjectsSerializerMixin:
     def validate_type(self, value):
-        # type possible: back-end, front-end, iOS ou Android
         if value not in ["back-end", "front-end", "iOS", "Android"]:
             raise serializers.ValidationError(
                 f"Type '{value}' unknow. Authorized values: back-end, front-end, iOS, Android")
@@ -32,13 +31,6 @@ class ProjectDetailSerializer(ProjectsSerializerMixin, serializers.ModelSerializ
         model = Projects
         fields = ["id", "title", "description", "type", "project_users"]
         extra_kwargs = {'project_users': {'write_only': True}}
-
-    # def validate_type(self, value):
-    #     # type possible: back-end, front-end, iOS ou Android
-    #     if value not in ["back-end", "front-end", "iOS", "Android"]:
-    #         raise serializers.ValidationError(
-    #             f"Type '{value}' unknow. Authorized values: back-end, front-end, iOS, Android")
-    #     return value
 
     def get_project_users(self, instance):
         project_users = instance.project_users.all()
@@ -92,17 +84,22 @@ class RegisterUserSerializer(serializers.ModelSerializer):
             "password",
             "password2",
             "has_parental_approvement",
+            "general_cnil_approvment",
             "can_be_contacted",
-            "can_data_be_shared"
+            "can_data_be_shared",
+            "can_contribute_to_a_project",
+            "can_profile_viewable"
         ]
         extra_kwargs = {'password': {'write_only': True}, 'has_parental_approvement': {'write_only': True}}
 
     def has_parental_approvement(self, instance):
         """
         Description:
-        This is a To-Do feature which requires an external capability.
+        This is a To-Do feature which may requires an external capability.
         You have to fix our own "parental approvement" mecanism.
+        Method should be use inside the validate function below within the UserProtectByRGPD exception.
         By default, because of a Development Environment we set the call back function to True.
+        By default, we just ask for a'has_parental_approvement' to True for a minor user.
         """
         return True
 
@@ -124,10 +121,12 @@ class RegisterUserSerializer(serializers.ModelSerializer):
                     raise serializers.ValidationError("Passwords must match")
                 return instance
         except UserProtectByRGPD:
-            instance['can_data_be_shared'] = False
-            if not self.has_parental_approvement(instance):
-                raise serializers.ValidationError(f"You are not {settings.RGPD_MIN_AGE} old, \
-                                                    and without parental approvement")
+            if 'has_parental_approvement' not in instance:
+                raise serializers.ValidationError(
+                ("You are not {settings.RGPD_MIN_AGE} years old, and without parental approvement."
+                "You can not validate CNIL approvement by yourself."
+                "Set a 'has_parental_approvement' attribute to 'True'")
+                )
             return instance
 
     def create(self, data):
@@ -140,6 +139,30 @@ class RegisterUserSerializer(serializers.ModelSerializer):
     def get(self, request, *args, **kwargs):
         user = get_user_model().objects.all()
         return user
+
+
+class UserDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = get_user_model()
+        fields = [
+            "id",
+            "username",
+            "first_name",
+            "last_name",
+            "birthdate",
+            "email",
+            "can_be_contacted",
+            "can_data_be_shared",
+            "can_contribute_to_a_project",
+            "can_profile_viewable",
+            "created_time"
+        ]
+
+
+class UserListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = get_user_model()
+        fields = ["id", "first_name", "last_name", "email"]
 
 
 class UserUpdatePasswordSerializer(serializers.ModelSerializer):
@@ -159,7 +182,6 @@ class UserUpdatePasswordSerializer(serializers.ModelSerializer):
         is_user_superadmin = bool(self.context['request'].user.is_superuser)
         if bool(does_user_update_his_own_pwd or is_user_superadmin):
             raise serializers.ValidationError("User can only change his password")
-
         return instance
 
     def validate_old_password(self, value):
@@ -169,66 +191,71 @@ class UserUpdatePasswordSerializer(serializers.ModelSerializer):
         return value
 
 
-class UserUpdateContactSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = get_user_model()
-        fields = ["can_be_contacted"]
-
-    def validate_can_data_be_shared(self, instance):
-        if instance is not True and instance is not False:
-            raise serializers.ValidationError({"can_be_contacted": "True/False expected"})
-        return instance
-
-
-class UserUpdateDataSharingSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = get_user_model()
-        fields = ["can_data_be_shared"]
-
-    def validate(self, instance):
-        if isinstance(instance, bool):
-            raise serializers.ValidationError({"can_data_be_shared": "True/False expected"})
-        return instance
-
-
-class UserListSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = get_user_model()
-        fields = ["id", "first_name", "last_name", "email"]
-
-
-class UserDetailSerializer(serializers.ModelSerializer):
+class UserUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = get_user_model()
         fields = [
             "id",
             "first_name",
             "last_name",
-            "birthdate",
             "email",
             "can_be_contacted",
             "can_data_be_shared",
-            "has_parental_approvement"
+            "can_contribute_to_a_project",
+            "can_profile_viewable"
         ]
+
+    def validate_first_name(self, instance):
+        if not len(instance) > 0:
+            raise serializers.ValidationError({"first_name": "Can not be null"})
+        return instance
+
+    def validate_last_name(self, instance):
+        if not len(instance) > 0:
+            raise serializers.ValidationError({"last_name": "Can not be null"})
+        return instance
+
+    def validate_email(self, instance):
+        user = get_user_model().objects.filter(email=instance)
+        if user:
+            raise serializers.ValidationError({"email": "Email already exists"})
+        return instance
+
+    def validate_can_be_contacted(self, instance):
+        if instance is not True and instance is not False:
+            raise serializers.ValidationError({"can_be_contacted": "True/False expected"})
+        return instance
+
+    def validate_can_data_be_shared(self, instance):
+        if instance is not True and instance is not False:
+            raise serializers.ValidationError({"can_data_be_shared": "True/False expected"})
+        return instance
+
+    def validate_can_contribute_to_a_project(self, instance):
+        if instance is not True and instance is not False:
+            raise serializers.ValidationError({"can_contribute_to_a_project": "True/False expected"})
+        return instance
+
+    def validate_can_profile_viewable(self, instance):
+        if instance is not True and instance is not False:
+            raise serializers.ValidationError({"can_profile_viewable": "True/False expected"})
+        return instance
 
 
 class IssueMixin:
     def validate_balise(self, value):
-        # balises possibles: bug, tâche, amélioration
         if value not in ["BUG", "TASK", "FEATURE"]:
             raise serializers.ValidationError(
                 f"Balise '{value}' unknow. Authorized values: BUG, TASK, FEATURE")
         return value
 
     def validate_priority(self, value):
-        # priorité possible: faible, moyenne, élevée
         if value not in ["LOW", "MEDIUM", "HIGH"]:
             raise serializers.ValidationError(
                 f"Priority '{value}' unknow. Authorized values: LOW, MEDIUM, HIGH")
         return value
 
     def validate_status(self, value):
-        # statuts possibles: à faire, en cours ou terminé
         if value not in ["To Do", "In Progress", "Finished"]:
             raise serializers.ValidationError(
                 f"Status '{value}' unknow. Authorized values: To Do, In Progress, Finished")

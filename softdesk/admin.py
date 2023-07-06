@@ -1,6 +1,6 @@
 from django.contrib import admin
 from softdesk.models import Projects, Issues, Comments, Contributors
-
+from django.contrib.auth import get_user_model
 
 class ProjectsAdminModel(admin.ModelAdmin):
     display = ["id", "title"]
@@ -22,3 +22,4 @@ admin.site.register(Projects, ProjectsAdminModel)
 admin.site.register(Issues, IssuesAdminModel)
 admin.site.register(Comments, CommentsAdminModel)
 admin.site.register(Contributors, ContributorsAdminModel)
+admin.site.register(get_user_model())
