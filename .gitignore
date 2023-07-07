@@ -7,3 +7,6 @@ db.sqlite3
 .github
 .pyc
 .cache/pypoetry
+authentication/migrations/0001_initial.py
+authentication/migrations/0002_initial.py
+softdesk/migrations/0001_initial.py
