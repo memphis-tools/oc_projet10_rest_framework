@@ -4,35 +4,35 @@
 ## Projet 10 - Créer une API sécurisée RESTful en utilisant Django REST
 
 ### Project description
-  Develop an opened access RESTful API which permits to supervise issues from 4 thematics: front-end, back-end, Android, or iOS.
-  For each thematic you create a Project. For each ones, users can create issues and comments (as long as they are part of a project).
-  So main features :
-        - be able to create projetcs
-        - add /remove user(s) from a specific project
-        -,allow users to create issues and comments
-        - endpoints which allows the dialog with the API
+    Develop an opened access RESTful API which permits to supervise issues from 4 thematics: front-end, back-end, Android, or iOS.
+    For each thematic you create a Project. For each ones, users can create issues and comments (as long as they are part of a project).
+    So main features :
+          - be able to create projetcs
+          - add /remove user(s) from a specific project
+          -,allow users to create issues and comments
+          - endpoints which allows the dialog with the API
 
 ### Requirements
-  Introduce all endpoints using Postman
-  Quickly describe the code and how you manage to respect OWASP and RGPD guidelines.
-  Introduce to a Postmand's API doc.
-  Implement a dependency manager, example: pipenv or poetry.
+    Introduce all endpoints using Postman
+    Quickly describe the code and how you manage to respect OWASP and RGPD guidelines.
+    Introduce to a Postmand's API doc.
+    Implement a dependency manager, example: pipenv or poetry.
 
 ### Competencies assessed
-  - Create API RESTful with Django REST.
-  - Securing an API with full respect of OWASP and RGPD guidelines.
-  - Document an application through Postman.
+    - Create API RESTful with Django REST.
+    - Securing an API with full respect of OWASP and RGPD guidelines.
+    - Document an application through Postman.
 
 ---
 
 ## How use this project ?
 
-  This REST API has a JWT tokens authentication mechanism implemented.
-  When you log to the application you will receive 2 tokens: an access one and a refresh one.
-  You will have to add the "access token" as a header in all your requests. Postman API documentation is below.
-  We set the "access token" with a 15 minutes lifetime validity. You will have to refresh your "access token".
-  Procedure to refresh it is describe below (as well in Postman API documentation).
-  Notice the application will prompt you when the token has expired.
+    This REST API has a JWT tokens authentication mechanism implemented.
+    When you log to the application you will receive 2 tokens: an access one and a refresh one.
+    You will have to add the "access token" as a header in all your requests. Postman API documentation is below.
+    We set the "access token" with a 15 minutes lifetime validity. You will have to refresh your "access token".
+    Procedure to refresh it is describe below (as well in Postman API documentation).
+    Notice the application will prompt you when the token has expired.
 
 1. Clone the repository
 
@@ -88,10 +88,11 @@
 
 4. Refresh your "access token"
 
-    To refresh, you just need to add a request POST to "token/refresh/" endpoint addressing your "refresh token".
-    You will then receive a new "access token". Please follow examples in the Postman API documentation.
+   To refresh, you just need to add a request POST to "token/refresh/" endpoint addressing your "refresh token".
+   
+   You will then receive a new "access token". Please follow examples in the Postman API documentation.
 
-5. Read the postman [API documentation](https://documenter.getpostman.com/view/24090419/2s93sc4sWt)
+6. Read the postman [API documentation](https://documenter.getpostman.com/view/24090419/2s93sc4sWt)
 
       `Illustration`
 ![Screenshot](oc_projet10_postman_doc.png)
@@ -99,7 +100,7 @@
       `All run in a development environment`
 ![Screenshot](oc_projet10_postman_env_development.png)
 
-6. Test the project
+7. Test the project
 
     To facilitate tests without updating the ACCESS_TOKEN_LIFETIME in settings file, you can use these instructions.
 
