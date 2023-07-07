@@ -105,11 +105,12 @@ AUTH_USER_MODEL = 'authentication.User'
 
 # https://github.com/jazzband/djangorestframework-simplejwt/blob/master/rest_framework_simplejwt/settings.py
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
+    "ACCESS_TOKEN_LIFETIME": timedelta(seconds=5),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
 }
 
 REST_FRAMEWORK = {
+    'TEST_REQUEST_DEFAULT_FORMAT': 'json',
     'DEFAULT_AUTHENTICATION_CLASSES': ['rest_framework_simplejwt.authentication.JWTAuthentication',],
     "USER_AUTHENTICATION_RULE": "rest_framework_simplejwt.authentication.default_user_authentication_rule",
     'DATETIME_FORMAT': "%d-%m-%Y %H:%M:%S",
