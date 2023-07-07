@@ -127,6 +127,12 @@ class RegisterUserSerializer(serializers.ModelSerializer):
                 "You can not validate CNIL approvement by yourself."
                 "Set a 'has_parental_approvement' attribute to 'True'")
                 )
+            elif 'has_parental_approvement' in instance and instance['has_parental_approvement'] is False:
+                raise serializers.ValidationError(
+                ("You are not {settings.RGPD_MIN_AGE} years old, and without parental approvement."
+                "You can not validate CNIL approvement by yourself."
+                "Set a 'has_parental_approvement' attribute to 'True'")
+                )
             return instance
 
     def create(self, data):
@@ -272,6 +278,12 @@ class IssuesSerializer(IssueMixin, serializers.ModelSerializer):
     class Meta:
         model = Issues
         fields = "__all__"
+
+
+class IssuesStatusSerializer(IssueMixin, serializers.ModelSerializer):
+    class Meta:
+        model = Issues
+        fields = ["status"]
 
 
 class CommentMixin:

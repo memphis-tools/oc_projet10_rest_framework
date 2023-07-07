@@ -15,11 +15,12 @@ import uuid
 
 from softdesk.permissions import UserCanUpdateProject, UserCanDeleteProject, UserCanDeleteProjects, \
     UserCanViewProject, UserCanUpdateProjectUser, UserCanDeleteUserFromProject, UserCanCreateIssue, \
-    UserNotAlreadyInProject, AssigneeUserIsContributor, UserCanUpdateUser, UserCanViewUser, UserCanUpdateComment, \
+    UserNotAlreadyInProject, UserCanUpdateUser, UserCanViewUser, UserCanUpdateComment, \
+    AssigneeUserIsContributor, \
     UserCanUpdateIssue, UserCanUpdateIssueStatus
 from softdesk.serializers import RegisterUserSerializer, UserListSerializer, UserDetailSerializer, \
     UserUpdateSerializer, UserUpdatePasswordSerializer, \
-    ProjectDetailSerializer, ProjectListSerializer, IssueSerializer, IssuesSerializer, \
+    ProjectDetailSerializer, ProjectListSerializer, IssueSerializer, IssuesSerializer, IssuesStatusSerializer, \
     CommentListSerializer, CommentDetailSerializer, CommentUpdateSerializer, \
     ContributorUpdateSerializer, ContributorListSerializer
 from softdesk.models import Projects, Issues, Comments, Contributors
@@ -114,11 +115,13 @@ class UsersAPIView(APIView):
 
     @transaction.atomic
     def delete(self, request, pk=None, *args, **kwargs):
-        users = get_user_model().objects.filter(id__gte=2)
+        users = get_user_model().objects.all()
         if not users:
             return Response(status=status.HTTP_404_NOT_FOUND)
         if self.request.user.is_superuser:
-            users.delete()
+            for user in users:
+                if not user.is_superuser:
+                    user.delete()
             issues = Issues.objects.all()
             issues.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
@@ -188,6 +191,9 @@ class ProjectsUsersAPIView(APIView):
             except Exception:
                 return Response(status=status.HTTP_404_NOT_FOUND)
 
+            if not queryset:
+                return Response(status=status.HTTP_404_NOT_FOUND)
+
             if self.request.user.is_superuser:
                 serializer = ContributorListSerializer(queryset, many=True)
             else:
@@ -255,25 +261,30 @@ class IssuesRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
     """
     Description: dédiée à permettre la modification du statut d'un problème.
     """
-    permission_classes = [IsAuthenticated, UserCanUpdateIssueStatus]
-    serializer_class = IssueSerializer
+    permission_classes = [IsAuthenticated | UserCanViewProject | UserCanUpdateIssueStatus]
+    serializer_class = IssuesStatusSerializer
 
     def get_queryset(self, *args, **kwargs):
         return Issues.objects.all()
 
     def put(self, request, pk, issue_id, *args, **kwargs):
         try:
+            Projects.objects.get(id=pk)
             issue = Issues.objects.get(id=issue_id)
         except Exception:
             return Response(status=status.HTTP_404_NOT_FOUND)
-
-        serializer = IssueSerializer(issue, partial=True)
-        if UserCanUpdateIssueStatus().has_permission(self.request, self, *args, **kwargs):
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data)
+        serializer = IssuesStatusSerializer(issue, data=request.data, partial=True)
+        if UserCanViewProject().has_permission(self.request, self, *args, **kwargs):
+            if UserCanUpdateIssueStatus().has_permission(self.request, self, *args, **kwargs):
+                if serializer.is_valid():
+                    serializer.save()
+                    return Response(serializer.data)
+                else:
+                    return Response(serializer.errors, status=status.HTTP_403_FORBIDDEN)
+            else:
+                return Response(status=status.HTTP_403_FORBIDDEN)
         else:
-            return Response(serializer.errors, status=status.HTTP_403_FORBIDDEN)
+            return Response(status=status.HTTP_403_FORBIDDEN)
         message = {}
         return Response(message, status=status.HTTP_400_BAD_REQUEST)
 
@@ -362,13 +373,12 @@ class IssuesAPIView(APIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
 
         if UserCanUpdateIssue().has_permission(self.request, self, *args, **kwargs):
-            if AssigneeUserIsContributor().has_permission(self.request, self, *args, **kwargs):
-                args_dict['project_id'] = pk
-                serializer = IssuesSerializer(issue, data=request.data, partial=True)
-                if serializer.is_valid():
-                    serializer.save()
-                    return Response(serializer.data)
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            args_dict['project_id'] = pk
+            serializer = IssuesSerializer(issue, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         message = {}
         return Response(message, status=status.HTTP_403_FORBIDDEN)
 
@@ -591,7 +601,7 @@ class ProjectsAPIView(APIView):
         except Exception:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
-        serializer = self.detail_serializer_class(project, data=request.data)
+        serializer = self.detail_serializer_class(project, data=request.data, partial=True)
         if UserCanUpdateProject().has_permission(self.request, self, *args, **kwargs):
             if serializer.is_valid():
                 serializer.save()

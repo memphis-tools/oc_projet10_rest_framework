@@ -86,4 +86,7 @@
       `All run in a development environment`
 ![Screenshot](oc_projet10_postman_env_development.png)
 
+5. Test the project
+
+    `pytest tests -vs`
 
