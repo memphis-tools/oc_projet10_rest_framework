@@ -1,14 +1,9 @@
-from django.urls import resolve, reverse
+from django.urls import reverse
 from django.test import Client
-from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
-from rest_framework import status
-from time import sleep
 import uuid
 import pytest
 
-from authentication.models import User
-from softdesk.models import Projects
+from softdesk.models import Issues
 
 
 @pytest.mark.django_db
@@ -54,7 +49,7 @@ class TestIssuesCrudAndAuthorization():
     }
 
     project_data1 = {
-        "title": f"Un 1er projet test de donald.duck",
+        "title": "Un 1er projet test de donald.duck",
         "description": "bla bla bla",
         "type": "front-end"
     }
@@ -66,7 +61,7 @@ class TestIssuesCrudAndAuthorization():
     }
 
     project_data2 = {
-        "title": f"Un 1er projet test de daisy.duck",
+        "title": "Un 1er projet test de daisy.duck",
         "description": "bla bla bla",
         "type": "back-end"
     }
@@ -96,7 +91,7 @@ class TestIssuesCrudAndAuthorization():
     @pytest.mark.django_db
     def test_authenticated_user_create_comment_for_an_issue_when_part_of_project(self):
         """
-        Ensure an authenticated user can create a comment for an issue in a project which he is the author or contributor.
+        Ensure an authenticated user can create a comment for an issue in a project he's part of.
         """
         client = Client()
         url = reverse('signup')
@@ -138,7 +133,7 @@ class TestIssuesCrudAndAuthorization():
     @pytest.mark.django_db
     def test_authenticated_user_create_comment_for_an_issue_without_being_part_of_project(self):
         """
-        Ensure an authenticated user can not create a comment for an issue if he either the author or contributor of project.
+        Ensure an authenticated user can not create a comment for an issue he's not part of.
         """
         client = Client()
         url = reverse('signup')
@@ -181,7 +176,7 @@ class TestIssuesCrudAndAuthorization():
     @pytest.mark.django_db
     def test_unauthenticated_user_create_comment_for_an_issue(self):
         """
-        Ensure an unauthenticated user can create a comment for an issue in a project which he is not either the author or contributor.
+        Ensure an unauthenticated user can create a comment for an issue in a project he's not part of.
         """
         client = Client()
         url = reverse('signup')
@@ -211,14 +206,14 @@ class TestIssuesCrudAndAuthorization():
         assert response.status_code == 200
 
         url = reverse('issues', kwargs={"pk": 1})
-        headers = {"Authorization": f"Bearer BeBopALula"}
+        headers = {"Authorization": "Bearer BeBopALula"}
         response = client.post(url, data=self.comment_data1, content_type="application/json", headers=headers)
         assert response.status_code == 401
 
     @pytest.mark.django_db
     def test_authenticated_user_view_comment_for_an_issue_when_part_of_project(self):
         """
-        Ensure an authenticated user can view a comment for an issue in a project which he is the author or contributor.
+        Ensure an authenticated user can view a comment for an issue in a project he's part of..
         """
         client = Client()
         url = reverse('signup')
@@ -264,7 +259,7 @@ class TestIssuesCrudAndAuthorization():
     @pytest.mark.django_db
     def test_authenticated_user_view_comment_for_an_issue_when_not_part_of_project(self):
         """
-        Ensure an authenticated user can view a comment for an issue in a project which he is the author or contributor.
+        Ensure an authenticated user can not view a comment for an issue in a project he's not part of.
         """
         client = Client()
         url = reverse('signup')
@@ -338,7 +333,7 @@ class TestIssuesCrudAndAuthorization():
         assert response.status_code == 200
 
         url = reverse('issues', kwargs={"pk": 1})
-        headers = {"Authorization": f"Bearer BeBopALula"}
+        headers = {"Authorization": "Bearer BeBopALula"}
         response = client.post(url, data=self.comment_data1, content_type="application/json", headers=headers)
         assert response.status_code == 401
 
@@ -453,7 +448,7 @@ class TestIssuesCrudAndAuthorization():
         assert response.status_code == 200
 
         url = reverse('issues', kwargs={"pk": 1})
-        headers = {"Authorization": f"Bearer BeBopALula"}
+        headers = {"Authorization": "Bearer BeBopALula"}
         response = client.put(url, data=self.comment_data1, content_type="application/json", headers=headers)
         assert response.status_code == 401
 
@@ -568,6 +563,131 @@ class TestIssuesCrudAndAuthorization():
         assert response.status_code == 200
 
         url = reverse('comments_detail', kwargs={"pk": 1, "issue_id": 1, "comment_id": 1})
-        headers = {"Authorization": f"Bearer BeBopALula"}
+        headers = {"Authorization": "Bearer BeBopALula"}
         response = client.delete(url, content_type="application/json", headers=headers)
         assert response.status_code == 401
+
+    @pytest.mark.django_db
+    def test_create_comment_on_a_finished_issue(self):
+        """
+        Ensure an unauthenticated user can not delete a comment for an issue.
+        """
+        client = Client()
+        url = reverse('signup')
+        client.post(url, data=self.user_data1)
+        client.post(url, data=self.user_data2)
+        client.post(url, data=self.user_data3)
+
+        url = reverse('login')
+        data = {"username": self.user_data1["username"], "password": self.user_data1["password"]}
+        response = client.post(url, data=data)
+
+        access_token = response.data["access"]
+        headers = {"Authorization": f"Bearer {access_token}"}
+        url = reverse('projects')
+        response = client.post(url, data=self.project_data1, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('projects_users', kwargs={"pk": 1})
+        response = client.post(url, data=self.contributor_project1a, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('issues', kwargs={"pk": 1})
+        response = client.post(url, data=self.issue_data1, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('issues_detail', kwargs={"pk": 1, "issue_id": 1})
+        response = client.delete(url, content_type="application/json", headers=headers)
+        issue = Issues.objects.get(id=1)
+        assert response.status_code == 204
+        assert issue.status == "Finished"
+
+        url = reverse('comments', kwargs={"pk": 1, "issue_id": 1})
+        response = client.post(url, data=self.comment_data1, content_type="application/json", headers=headers)
+        assert response.status_code == 403
+
+    @pytest.mark.django_db
+    def test_delete_comment_on_a_finished_issue(self):
+        """
+        Ensure an unauthenticated user can not delete a comment for an issue.
+        """
+        client = Client()
+        url = reverse('signup')
+        client.post(url, data=self.user_data1)
+        client.post(url, data=self.user_data2)
+        client.post(url, data=self.user_data3)
+
+        url = reverse('login')
+        data = {"username": self.user_data1["username"], "password": self.user_data1["password"]}
+        response = client.post(url, data=data)
+
+        access_token = response.data["access"]
+        headers = {"Authorization": f"Bearer {access_token}"}
+        url = reverse('projects')
+        response = client.post(url, data=self.project_data1, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('projects_users', kwargs={"pk": 1})
+        response = client.post(url, data=self.contributor_project1a, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('issues', kwargs={"pk": 1})
+        response = client.post(url, data=self.issue_data1, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('comments', kwargs={"pk": 1, "issue_id": 1})
+        response = client.post(url, data=self.comment_data1, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('issues_detail', kwargs={"pk": 1, "issue_id": 1})
+        response = client.delete(url, content_type="application/json", headers=headers)
+        issue = Issues.objects.get(id=1)
+        assert response.status_code == 204
+        assert issue.status == "Finished"
+
+        url = reverse('comments_detail', kwargs={"pk": 1, "issue_id": 1, "comment_id": 1})
+        response = client.delete(url, content_type="application/json", headers=headers)
+        assert response.status_code == 403
+
+    @pytest.mark.django_db
+    def test_update_comment_on_a_finished_issue(self):
+        """
+        Ensure an unauthenticated user can not delete a comment for an issue.
+        """
+        client = Client()
+        url = reverse('signup')
+        client.post(url, data=self.user_data1)
+        client.post(url, data=self.user_data2)
+        client.post(url, data=self.user_data3)
+
+        url = reverse('login')
+        data = {"username": self.user_data1["username"], "password": self.user_data1["password"]}
+        response = client.post(url, data=data)
+
+        access_token = response.data["access"]
+        headers = {"Authorization": f"Bearer {access_token}"}
+        url = reverse('projects')
+        response = client.post(url, data=self.project_data1, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('projects_users', kwargs={"pk": 1})
+        response = client.post(url, data=self.contributor_project1a, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('issues', kwargs={"pk": 1})
+        response = client.post(url, data=self.issue_data1, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('comments', kwargs={"pk": 1, "issue_id": 1})
+        response = client.post(url, data=self.comment_data1, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('issues_detail', kwargs={"pk": 1, "issue_id": 1})
+        response = client.delete(url, content_type="application/json", headers=headers)
+        issue = Issues.objects.get(id=1)
+        assert response.status_code == 204
+        assert issue.status == "Finished"
+
+        url = reverse('comments_detail', kwargs={"pk": 1, "issue_id": 1, "comment_id": 1})
+        response = client.put(url, data=self.comment_data1_update, content_type="application/json", headers=headers)
+        assert response.status_code == 403

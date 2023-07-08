@@ -1,12 +1,7 @@
-from django.urls import resolve, reverse
+from django.urls import reverse
 from django.test import Client
-from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
-from rest_framework import status
-from time import sleep
 import pytest
 
-from authentication.models import User
 from softdesk.models import Projects
 
 
@@ -53,7 +48,7 @@ class TestIssuesCrudAndAuthorization():
     }
 
     project_data1 = {
-        "title": f"Un 1er projet test de donald.duck",
+        "title": "Un 1er projet test de donald.duck",
         "description": "bla bla bla",
         "type": "front-end"
     }
@@ -65,7 +60,7 @@ class TestIssuesCrudAndAuthorization():
     }
 
     project_data2 = {
-        "title": f"Un 1er projet test de daisy.duck",
+        "title": "Un 1er projet test de daisy.duck",
         "description": "bla bla bla",
         "type": "back-end"
     }
@@ -137,12 +132,12 @@ class TestIssuesCrudAndAuthorization():
     @pytest.mark.django_db
     @pytest.mark.parametrize(
         "balise, priority, status", [
-            ("BUGGY", "LOW",  "To Do"),
+            ("BUGGY", "LOW", "To Do"),
             ("BUG", "NOT TOO HIGH", "To Do"),
             ("BUG", "LOW", "To Be Done ASAP"),
-            ]
-        )
-    def test_authenticated_user_create_issue_when_author_or_contributor_of_project_but_with_wrong_data(self, balise, priority, status):
+        ]
+    )
+    def test_authenticated_user_create_issue_but_with_wrong_data(self, balise, priority, status):
         """
         Ensure an authenticated user can not create an issue with wrong data.
         """
@@ -229,7 +224,7 @@ class TestIssuesCrudAndAuthorization():
         assert response.status_code == 200
 
         url = reverse('issues', kwargs={"pk": 1})
-        headers = {"Authorization": f"Bearer BeBopALula"}
+        headers = {"Authorization": "Bearer BeBopALula"}
         response = client.post(url, data=self.issue_data2, content_type="application/json", headers=headers)
         assert response.status_code == 401
 
@@ -344,7 +339,6 @@ class TestIssuesCrudAndAuthorization():
         response = client.put(url, data=self.issue_data1_update, content_type="application/json", headers=headers)
         assert response.status_code == 403
 
-
     @pytest.mark.django_db
     def test_unauthenticated_user_update_issue(self):
         """
@@ -378,7 +372,7 @@ class TestIssuesCrudAndAuthorization():
         response = client.post(url, data=data)
 
         url = reverse('issues_detail', kwargs={"pk": 1, "issue_id": 1})
-        headers = {"Authorization": f"Bearer BeBopALula"}
+        headers = {"Authorization": "Bearer BeBopALula"}
         response = client.put(url, data=self.issue_data2, content_type="application/json", headers=headers)
         assert response.status_code == 401
 
@@ -497,7 +491,6 @@ class TestIssuesCrudAndAuthorization():
         url = reverse('issues_status', kwargs={"pk": 1, "issue_id": 1})
         response = client.put(url, data=self.issue_data1_update, content_type="application/json", headers=headers)
         assert response.status_code == 403
-
 
     @pytest.mark.django_db
     def test_authenticated_user_delete_issue_he_created(self):
@@ -642,6 +635,222 @@ class TestIssuesCrudAndAuthorization():
         assert response.status_code == 200
 
         url = reverse('issues_detail', kwargs={"pk": 1, "issue_id": 1})
-        headers = {"Authorization": f"Bearer BeBopALula"}
+        headers = {"Authorization": "Bearer BeBopALula"}
         response = client.delete(url, content_type="application/json", headers=headers)
         assert response.status_code == 401
+
+    @pytest.mark.django_db
+    def test_add_issue_on_canceled_project(self):
+        """
+        Ensure user can add issue to an canceled project.
+        """
+        client = Client()
+        url = reverse('signup')
+        client.post(url, data=self.user_data1)
+        client.post(url, data=self.user_data2)
+
+        url = reverse('login')
+        data = {"username": self.user_data1["username"], "password": self.user_data1["password"]}
+        response = client.post(url, data=data)
+
+        access_token = response.data["access"]
+        headers = {"Authorization": f"Bearer {access_token}"}
+        url = reverse('projects')
+        response = client.post(url, data=self.project_data1, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('projects_users', kwargs={"pk": 1})
+        response = client.post(url, data=self.contributor_project1a, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('projects_detail', kwargs={"pk": 1})
+        response = client.delete(url, content_type="application/json", headers=headers)
+        project = Projects.objects.get(id=1)
+        assert response.status_code == 204
+        assert project.status == "Annulé"
+
+        url = reverse('issues', kwargs={"pk": 1})
+        response = client.post(url, data=self.issue_data1, content_type="application/json", headers=headers)
+        assert response.status_code == 403
+
+    @pytest.mark.django_db
+    def test_add_issue_on_archived_project(self):
+        """
+        Ensure user can add issue to an archived project.
+        """
+        client = Client()
+        url = reverse('signup')
+        client.post(url, data=self.user_data1)
+        client.post(url, data=self.user_data2)
+
+        url = reverse('login')
+        data = {"username": self.user_data1["username"], "password": self.user_data1["password"]}
+        response = client.post(url, data=data)
+
+        access_token = response.data["access"]
+        headers = {"Authorization": f"Bearer {access_token}"}
+        url = reverse('projects')
+        response = client.post(url, data=self.project_data1, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('projects_users', kwargs={"pk": 1})
+        response = client.post(url, data=self.contributor_project1a, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('issues', kwargs={"pk": 1})
+        response = client.post(url, data=self.issue_data1, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('projects_detail', kwargs={"pk": 1})
+        response = client.delete(url, content_type="application/json", headers=headers)
+        project = Projects.objects.get(id=1)
+        assert response.status_code == 204
+        assert project.status == "Archivé"
+
+        url = reverse('issues', kwargs={"pk": 1})
+        response = client.post(url, data=self.issue_data1, content_type="application/json", headers=headers)
+        assert response.status_code == 403
+
+    @pytest.mark.django_db
+    def test_update_issue_on_canceled_project(self):
+        """
+        Ensure an authenticated user can not update an issue on a canceled project.
+        """
+        client = Client()
+        url = reverse('signup')
+        client.post(url, data=self.user_data1)
+        client.post(url, data=self.user_data2)
+
+        url = reverse('login')
+        data = {"username": self.user_data1["username"], "password": self.user_data1["password"]}
+        response = client.post(url, data=data)
+
+        access_token = response.data["access"]
+        headers = {"Authorization": f"Bearer {access_token}"}
+        url = reverse('projects')
+        response = client.post(url, data=self.project_data1, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('projects_users', kwargs={"pk": 1})
+        response = client.post(url, data=self.contributor_project1a, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('projects_detail', kwargs={"pk": 1})
+        response = client.delete(url, content_type="application/json", headers=headers)
+        project = Projects.objects.get(id=1)
+        assert response.status_code == 204
+        assert project.status == "Annulé"
+
+        url = reverse('issues_status', kwargs={"pk": 1, "issue_id": 1})
+        response = client.put(url, data=self.issue_data1_update, content_type="application/json", headers=headers)
+        assert response.status_code == 404
+
+    @pytest.mark.django_db
+    def test_update_issue_on_archived_project(self):
+        """
+        Ensure an authenticated user can not update an issue on an archived project.
+        """
+        client = Client()
+        url = reverse('signup')
+        client.post(url, data=self.user_data1)
+        client.post(url, data=self.user_data2)
+
+        url = reverse('login')
+        data = {"username": self.user_data1["username"], "password": self.user_data1["password"]}
+        response = client.post(url, data=data)
+
+        access_token = response.data["access"]
+        headers = {"Authorization": f"Bearer {access_token}"}
+        url = reverse('projects')
+        response = client.post(url, data=self.project_data1, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('projects_users', kwargs={"pk": 1})
+        response = client.post(url, data=self.contributor_project1a, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('issues', kwargs={"pk": 1})
+        response = client.post(url, data=self.issue_data1, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('projects_detail', kwargs={"pk": 1})
+        response = client.delete(url, content_type="application/json", headers=headers)
+        project = Projects.objects.get(id=1)
+        assert response.status_code == 204
+        assert project.status == "Archivé"
+
+        url = reverse('issues_status', kwargs={"pk": 1, "issue_id": 1})
+        response = client.put(url, data=self.issue_data1_update, content_type="application/json", headers=headers)
+        assert response.status_code == 403
+
+    @pytest.mark.django_db
+    def test_delete_issue_on_canceled_project(self):
+        """
+        Ensure an authenticated user can not delete an issue on a canceled project.
+        """
+        client = Client()
+        url = reverse('signup')
+        client.post(url, data=self.user_data1)
+        client.post(url, data=self.user_data2)
+
+        url = reverse('login')
+        data = {"username": self.user_data1["username"], "password": self.user_data1["password"]}
+        response = client.post(url, data=data)
+
+        access_token = response.data["access"]
+        headers = {"Authorization": f"Bearer {access_token}"}
+        url = reverse('projects')
+        response = client.post(url, data=self.project_data1, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('projects_users', kwargs={"pk": 1})
+        response = client.post(url, data=self.contributor_project1a, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('projects_detail', kwargs={"pk": 1})
+        response = client.delete(url, content_type="application/json", headers=headers)
+        project = Projects.objects.get(id=1)
+        assert response.status_code == 204
+        assert project.status == "Annulé"
+
+        url = reverse('issues_detail', kwargs={"pk": 1, "issue_id": 1})
+        response = client.delete(url, content_type="application/json", headers=headers)
+        assert response.status_code == 404
+
+    @pytest.mark.django_db
+    def test_delete_issue_on_archived_project(self):
+        """
+        Ensure an authenticated user can not delete an issue on a archived project.
+        """
+        client = Client()
+        url = reverse('signup')
+        client.post(url, data=self.user_data1)
+        client.post(url, data=self.user_data2)
+
+        url = reverse('login')
+        data = {"username": self.user_data1["username"], "password": self.user_data1["password"]}
+        response = client.post(url, data=data)
+
+        access_token = response.data["access"]
+        headers = {"Authorization": f"Bearer {access_token}"}
+        url = reverse('projects')
+        response = client.post(url, data=self.project_data1, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('projects_users', kwargs={"pk": 1})
+        response = client.post(url, data=self.contributor_project1a, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('issues', kwargs={"pk": 1})
+        response = client.post(url, data=self.issue_data1, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('projects_detail', kwargs={"pk": 1})
+        response = client.delete(url, content_type="application/json", headers=headers)
+        project = Projects.objects.get(id=1)
+        assert response.status_code == 204
+        assert project.status == "Archivé"
+
+        url = reverse('issues_detail', kwargs={"pk": 1, "issue_id": 1})
+        response = client.delete(url, content_type="application/json", headers=headers)
+        assert response.status_code == 403

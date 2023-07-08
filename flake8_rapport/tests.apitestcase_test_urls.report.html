@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+   <head>
+      <title>flake8 violations: tests/apitestcase_test_urls.py</title>
+      <meta http-equiv="Content-Type" value="text/html; charset=UTF-8">
+      <link rel="stylesheet" href="styles.css">
+<script>
+function bindHandler(link) {
+   var code = link.getAttribute('data-code');
+   var key = location.pathname + '#' + code;
+
+   var ul = link.parentNode.querySelector('.details');
+   if (sessionStorage[key] != 'open') {
+      ul.style.display = 'none';
+   }
+   link.addEventListener('click', function (event) {
+      if (!ul.style.display || ul.style.display == 'none') {
+         ul.style.display = 'block';
+         sessionStorage[key] = 'open';
+      } else {
+         ul.style.display = 'none';
+         sessionStorage[key] = 'closed';
+      }
+   });
+}
+
+window.addEventListener('DOMContentLoaded', function () {
+   var links = document.querySelectorAll('#index > li > a');
+   for (var i = 0; i < links.length; i++) {
+      bindHandler(links[i]);
+   }
+});
+</script>
+   </head>
+   <body>
+      <div id="masthead" class="sev-1"></div>
+      <div id="page">
+         <p id="srclink">
+            <a title="View full annotated source"
+               href="tests.apitestcase_test_urls.source.html">
+               <img src="file.svg" alt="&#x2261;">
+            </a></p>
+         <h1>
+            <a href="index.html">
+               <img src="back.svg" alt="&#x2B05;">
+               tests/apitestcase_test_urls.py
+            </a>
+         </h1>
+
+         <ul id="index">
+         
+         <li>
+            <a data-code="F401">
+               <span class="count sev-1">
+                  4
+               </span>
+               <strong>F401:</strong> 'rest_framework.status' imported but unused
+               
+                  (and 3 similar)
+               
+            </a>
+            <ul class="details">
+            <li>
+               
+               <p>'rest_framework.status' imported but unused:</p>
+               
+               <a href="tests.apitestcase_test_urls.source.html#l2">
+                  <tt><i>2</i> <span class="kn">from</span> <span class="nn">rest_framework</span> <span class="kn">import</span> <span class="n">status</span></tt>
+               </a>
+            </li><li>
+               
+               <p>'rest_framework.test.APITestCase' imported but unused:</p>
+               
+               <a href="tests.apitestcase_test_urls.source.html#l3">
+                  <tt><i>3</i> <span class="kn">from</span> <span class="nn">rest_framework.test</span> <span class="kn">import</span> <span class="n">APITestCase</span></tt>
+               </a>
+            </li><li>
+               
+               <p>'colorama.Fore' imported but unused:</p>
+               
+               <a href="tests.apitestcase_test_urls.source.html#l4">
+                  <tt><i>4</i> <span class="kn">from</span> <span class="nn">colorama</span> <span class="kn">import</span> <span class="n">Fore</span><span class="p">,</span> <span class="n">Style</span></tt>
+               </a>
+            </li><li>
+               
+               <p>'colorama.Style' imported but unused:</p>
+               
+               <a href="tests.apitestcase_test_urls.source.html#l4">
+                  <tt><i>4</i> <span class="kn">from</span> <span class="nn">colorama</span> <span class="kn">import</span> <span class="n">Fore</span><span class="p">,</span> <span class="n">Style</span></tt>
+               </a>
+            </li>
+            </ul>
+         </li>
+         
+         <li>
+            <a data-code="E302">
+               <span class="count sev-2">
+                  11
+               </span>
+               <strong>E302:</strong> expected 2 blank lines, found 1
+               
+            </a>
+            <ul class="details">
+            <li>
+               
+               <a href="tests.apitestcase_test_urls.source.html#l15">
+                  <tt><i>15</i> <span class="k">def</span> <span class="nf">test_login</span><span class="p">():</span></tt>
+               </a>
+            </li><li>
+               
+               <a href="tests.apitestcase_test_urls.source.html#l23">
+                  <tt><i>23</i> <span class="k">def</span> <span class="nf">test_users_list</span><span class="p">():</span></tt>
+               </a>
+            </li><li>
+               
+               <a href="tests.apitestcase_test_urls.source.html#l31">
+                  <tt><i>31</i> <span class="k">def</span> <span class="nf">test_user_details</span><span class="p">():</span></tt>
+               </a>
+            </li><li>
+               
+               <a href="tests.apitestcase_test_urls.source.html#l39">
+                  <tt><i>39</i> <span class="k">def</span> <span class="nf">test_user_change_password</span><span class="p">():</span></tt>
+               </a>
+            </li><li>
+               
+               <a href="tests.apitestcase_test_urls.source.html#l47">
+                  <tt><i>47</i> <span class="k">def</span> <span class="nf">test_projects_list</span><span class="p">():</span></tt>
+               </a>
+            </li><li>
+               
+               <a href="tests.apitestcase_test_urls.source.html#l55">
+                  <tt><i>55</i> <span class="k">def</span> <span class="nf">test_project_details</span><span class="p">():</span></tt>
+               </a>
+            </li><li>
+               
+               <a href="tests.apitestcase_test_urls.source.html#l63">
+                  <tt><i>63</i> <span class="k">def</span> <span class="nf">test_project_issues_list</span><span class="p">():</span></tt>
+               </a>
+            </li><li>
+               
+               <a href="tests.apitestcase_test_urls.source.html#l71">
+                  <tt><i>71</i> <span class="k">def</span> <span class="nf">test_project_issue_details</span><span class="p">():</span></tt>
+               </a>
+            </li><li>
+               
+               <a href="tests.apitestcase_test_urls.source.html#l79">
+                  <tt><i>79</i> <span class="k">def</span> <span class="nf">test_project_change_issue_status</span><span class="p">():</span></tt>
+               </a>
+            </li><li>
+               
+               <a href="tests.apitestcase_test_urls.source.html#l87">
+                  <tt><i>87</i> <span class="k">def</span> <span class="nf">test_issue_comments_list</span><span class="p">():</span></tt>
+               </a>
+            </li><li>
+               
+               <a href="tests.apitestcase_test_urls.source.html#l95">
+                  <tt><i>95</i> <span class="k">def</span> <span class="nf">test_issue_comment_details</span><span class="p">():</span></tt>
+               </a>
+            </li>
+            </ul>
+         </li>
+         
+         </ul>
+      </div>
+   </body>
+</html>

@@ -1,13 +1,10 @@
-from django.urls import resolve, reverse
+from django.urls import reverse
 from django.test import Client
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
-from rest_framework import status
 from time import sleep
 import pytest
 
-from authentication.models import User
-from softdesk.models import Projects, Contributors, Issues, Comments
+from softdesk.models import Projects, Contributors
 
 
 @pytest.mark.django_db
@@ -53,7 +50,7 @@ class TestProjectsCrudAndAuthorization():
     }
 
     project_data1 = {
-        "title": f"Un 1er projet test de donald.duck",
+        "title": "Un 1er projet test de donald.duck",
         "description": "bla bla bla",
         "type": "front-end"
     }
@@ -75,6 +72,17 @@ class TestProjectsCrudAndAuthorization():
         "contributor_id": 15,
     }
 
+    issue_data1 = {
+        "title": "1er problème à propos de la fonction affichage facture",
+        "description": "Phasellus posuere ultricies urna nec molestie. Ut nec leo pretium purus a, bibendum nulla.",
+        "balise": "BUG",
+        "priority": "HIGH",
+        "project_id": "1",
+        "status": "To Do",
+        "author_user_id": "1",
+        "assignee_user_id": "2"
+    }
+
     contributor_project2 = {
         "project_id": 2,
         "user_id": 1,
@@ -82,13 +90,13 @@ class TestProjectsCrudAndAuthorization():
     }
 
     project_data2 = {
-        "title": f"Un 1er projet test de daisy.duck",
+        "title": "Un 1er projet test de daisy.duck",
         "description": "bla bla bla",
         "type": "back-end"
     }
 
     project_data3 = {
-        "title": f"Un 2ème projet test de donald.duck",
+        "title": "Un 2ème projet test de donald.duck",
         "description": "bla bla bla",
         "type": "iOS"
     }
@@ -117,7 +125,7 @@ class TestProjectsCrudAndAuthorization():
         assert contributors[0].role == "AUTHOR"
         assert contributors[1].role == "CONTRIBUTOR"
 
-        headers = {"Authorization": f"Bearer BeBopALula"}
+        headers = {"Authorization": "Bearer BeBopALula"}
         response = client.post(url, data=self.project_data1, content_type="application/json", headers=headers)
         assert response.status_code == 401
 
@@ -127,7 +135,7 @@ class TestProjectsCrudAndAuthorization():
         Ensure an unauthenticated user can not create a project.
         """
         client = Client()
-        headers = {"Authorization": f"Bearer BeBopALula"}
+        headers = {"Authorization": "Bearer BeBopALula"}
         url = reverse('projects')
         response = client.post(url, data=self.project_data1, content_type="application/json", headers=headers)
         assert response.status_code == 401
@@ -149,7 +157,7 @@ class TestProjectsCrudAndAuthorization():
         headers = {"Authorization": f"Bearer {access_token}"}
         url = reverse('projects')
         data = {
-            "title": f"Un 1er projet test de donald.duck",
+            "title": "Un 1er projet test de donald.duck",
             "description": "bla bla bla",
             "type": type
         }
@@ -185,7 +193,7 @@ class TestProjectsCrudAndAuthorization():
         response = client.post(url, data=self.contributor_project1b, content_type="application/json", headers=headers)
         assert response.status_code == 404
 
-        headers = {"Authorization": f"Bearer BeBopALula"}
+        headers = {"Authorization": "Bearer BeBopALula"}
         response = client.post(url, data=self.project_data1, content_type="application/json", headers=headers)
         assert response.status_code == 401
 
@@ -219,7 +227,7 @@ class TestProjectsCrudAndAuthorization():
         response = client.post(url, data=self.contributor_project1a, content_type="application/json", headers=headers)
         assert response.status_code == 403
 
-        headers = {"Authorization": f"Bearer BeBopALula"}
+        headers = {"Authorization": "Bearer BeBopALula"}
         response = client.post(url, data=self.project_data1, content_type="application/json", headers=headers)
         assert response.status_code == 401
 
@@ -509,7 +517,7 @@ class TestProjectsCrudAndAuthorization():
         url = reverse('projects_detail', kwargs={"pk": 1})
         response = client.delete(url, headers=headers)
         assert response.status_code == 204
-        assert Projects.objects.count() == 1
+        assert Projects.objects.count() == 2
 
         response = client.delete(url, headers=headers)
         assert response.status_code == 404
@@ -596,3 +604,150 @@ class TestProjectsCrudAndAuthorization():
         sleep(sleep_time.seconds)
         response = client.delete(url, headers=headers)
         assert response.status_code == 401
+
+    @pytest.mark.django_db
+    def test_archive_project(self):
+        """
+        Ensure a project can not be deleted (only by admin account) but only updated as "Annulé" ou "Archivé".
+        We ensure here that a project with 2 users (means the same one, author and contributor) and at least 1 issue,
+        will have status "Archivé" after deletion.
+        """
+        client = Client()
+        url = reverse('signup')
+        client.post(url, data=self.user_data1)
+        client.post(url, data=self.user_data2)
+
+        url = reverse('login')
+        data = {"username": self.user_data1["username"], "password": self.user_data1["password"]}
+        response = client.post(url, data=data)
+
+        access_token = response.data["access"]
+        headers = {"Authorization": f"Bearer {access_token}"}
+        url = reverse('projects')
+        response = client.post(url, data=self.project_data1, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('projects_users', kwargs={"pk": 1})
+        response = client.post(url, data=self.contributor_project1a, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('issues', kwargs={"pk": 1})
+        response = client.post(url, data=self.issue_data1, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('projects_detail', kwargs={"pk": 1})
+        response = client.delete(url, content_type="application/json", headers=headers)
+        projects_count = Projects.objects.all().count()
+        project = Projects.objects.get(id=1)
+        assert response.status_code == 204
+        assert projects_count == 1
+        assert project.status == "Archivé"
+
+    @pytest.mark.django_db
+    def test_cancel_project(self):
+        """
+        Ensure a project can not be deleted (only by admin account) but only updated as "Annulé" ou "Archivé".
+        We ensure here that a project with at least 1 issue, will have status "Archivé" after deletion.
+        """
+        client = Client()
+        url = reverse('signup')
+        client.post(url, data=self.user_data1)
+        client.post(url, data=self.user_data2)
+
+        url = reverse('login')
+        data = {"username": self.user_data1["username"], "password": self.user_data1["password"]}
+        response = client.post(url, data=data)
+
+        access_token = response.data["access"]
+        headers = {"Authorization": f"Bearer {access_token}"}
+        url = reverse('projects')
+        response = client.post(url, data=self.project_data1, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('projects_users', kwargs={"pk": 1})
+        response = client.post(url, data=self.contributor_project1a, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('projects_detail', kwargs={"pk": 1})
+        response = client.delete(url, content_type="application/json", headers=headers)
+        projects_count = Projects.objects.all().count()
+        project = Projects.objects.get(id=1)
+        assert response.status_code == 204
+        assert projects_count == 1
+        assert project.status == "Annulé"
+
+    @pytest.mark.django_db
+    def test_any_update_to_a_canceled_project(self):
+        """
+        Ensure an user can not add a contributor to project which status is "Annulé".
+        """
+        client = Client()
+        url = reverse('signup')
+        client.post(url, data=self.user_data1)
+        client.post(url, data=self.user_data2)
+
+        url = reverse('login')
+        data = {"username": self.user_data1["username"], "password": self.user_data1["password"]}
+        response = client.post(url, data=data)
+
+        access_token = response.data["access"]
+        headers = {"Authorization": f"Bearer {access_token}"}
+        url = reverse('projects')
+        response = client.post(url, data=self.project_data1, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('projects_detail', kwargs={"pk": 1})
+        response = client.delete(url, content_type="application/json", headers=headers)
+        project = Projects.objects.get(id=1)
+        assert response.status_code == 204
+        assert project.status == "Annulé"
+
+        url = reverse('projects_users', kwargs={"pk": 1})
+        response = client.post(url, data=self.contributor_project1a, content_type="application/json", headers=headers)
+        assert response.status_code == 403
+
+        url = reverse('projects_detail', kwargs={'pk': 1})
+        response = client.put(url, data=self.project_data1_update, content_type="application/json", headers=headers)
+        assert response.status_code == 403
+
+    @pytest.mark.django_db
+    def test_any_update_to_a_archived_project(self):
+        """
+        Ensure an user can not add a contributor to project which status is "Archivé".
+        """
+        client = Client()
+        url = reverse('signup')
+        client.post(url, data=self.user_data1)
+        client.post(url, data=self.user_data2)
+
+        url = reverse('login')
+        data = {"username": self.user_data1["username"], "password": self.user_data1["password"]}
+        response = client.post(url, data=data)
+
+        access_token = response.data["access"]
+        headers = {"Authorization": f"Bearer {access_token}"}
+        url = reverse('projects')
+        response = client.post(url, data=self.project_data1, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('projects_users', kwargs={"pk": 1})
+        response = client.post(url, data=self.contributor_project1a, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('issues', kwargs={"pk": 1})
+        response = client.post(url, data=self.issue_data1, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('projects_detail', kwargs={"pk": 1})
+        response = client.delete(url, content_type="application/json", headers=headers)
+        project = Projects.objects.get(id=1)
+        assert response.status_code == 204
+        assert project.status == "Archivé"
+
+        url = reverse('projects_users', kwargs={"pk": 1})
+        response = client.post(url, data=self.contributor_project1a, content_type="application/json", headers=headers)
+        assert response.status_code == 403
+
+        url = reverse('projects_detail', kwargs={'pk': 1})
+        response = client.put(url, data=self.project_data1_update, content_type="application/json", headers=headers)
+        assert response.status_code == 403

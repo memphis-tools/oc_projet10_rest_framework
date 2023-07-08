@@ -93,11 +93,12 @@ class Command(BaseCommand):
             },
         ]
         print(f"{Fore.YELLOW}[DUMMY SUPERUSER CREATION]{Style.RESET_ALL}")
-        User.objects.create_superuser(SUPERUSER_NAME,
-                                        SUPERUSER_EMAIL,
-                                        SUPERUSER_PASSWORD,
-                                        birthdate="0001-01-01",
-                                        general_cnil_approvment=True
+        User.objects.create_superuser(
+            SUPERUSER_NAME,
+            SUPERUSER_EMAIL,
+            SUPERUSER_PASSWORD,
+            birthdate="0001-01-01",
+            general_cnil_approvment=True
         )
         print(f"{Fore.GREEN}[DUMMY SUPERUSER CREATED]{Style.RESET_ALL}")
         print(f"{Fore.YELLOW}[DUMMY USERS CREATION]{Style.RESET_ALL}")

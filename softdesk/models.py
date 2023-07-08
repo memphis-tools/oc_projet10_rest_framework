@@ -12,6 +12,8 @@ class Projects(models.Model):
         get_user_model(),
         through='Contributors',
     )
+    # status possibles: Ouvert, Archivé, Annulé
+    status = models.CharField(max_length=30, default="Ouvert", null=False, blank=False)
     created_time = models.DateTimeField(default=now)
 
 
@@ -23,7 +25,7 @@ class Issues(models.Model):
     # priorité possible: LOW, MEDIUM, HIGH
     priority = models.CharField(max_length=25, null=False, blank=False)
     project_id = models.ForeignKey(Projects, on_delete=models.CASCADE)
-    # status possibles: To Do, In Progress ou Finished
+    # status possibles: To Do, In Progress, Finished
     status = models.CharField(max_length=30, default="To Do", null=False, blank=False)
     author_user_id = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, null=True)
     assignee_user_id = models.ForeignKey(
