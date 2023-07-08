@@ -2,6 +2,7 @@ from django.contrib import admin
 from softdesk.models import Projects, Issues, Comments, Contributors
 from django.contrib.auth import get_user_model
 
+
 class ProjectsAdminModel(admin.ModelAdmin):
     display = ["id", "title"]
 

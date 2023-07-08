@@ -16,8 +16,8 @@ import uuid
 from softdesk.permissions import UserCanUpdateProject, UserCanDeleteProject, UserCanDeleteProjects, \
     UserCanViewProject, UserCanUpdateProjectUser, UserCanDeleteUserFromProject, UserCanCreateIssue, \
     UserNotAlreadyInProject, UserCanUpdateUser, UserCanViewUser, UserCanUpdateComment, \
-    AssigneeUserIsContributor, \
-    UserCanUpdateIssue, UserCanUpdateIssueStatus
+    AssigneeUserIsContributor, ProjectCanBeUpdate, \
+    IssueCanBeUpdate, UserCanUpdateIssue, UserCanUpdateIssueStatus
 from softdesk.serializers import RegisterUserSerializer, UserListSerializer, UserDetailSerializer, \
     UserUpdateSerializer, UserUpdatePasswordSerializer, \
     ProjectDetailSerializer, ProjectListSerializer, IssueSerializer, IssuesSerializer, IssuesStatusSerializer, \
@@ -160,7 +160,7 @@ class ProjectsUsersAPIView(APIView):
     """
     Description: dédiée à permettre l'ajout, la consultation, ou suppression d'un utilisateur à un projet.
     """
-    permission_classes = [IsAuthenticated, UserCanUpdateProject | UserCanViewProject,]
+    permission_classes = [IsAuthenticated, UserCanUpdateProject | UserCanViewProject | ProjectCanBeUpdate]
     serializer_class = ContributorUpdateSerializer
 
     def get_queryset(self, *args, **kwargs):
@@ -213,23 +213,27 @@ class ProjectsUsersAPIView(APIView):
         if UserNotAlreadyInProject().has_permission(self.request, self, *args, **kwargs):
             if UserCanUpdateProject().has_permission(self.request, self, *args, **kwargs):
                 if UserCanUpdateProjectUser().has_permission(self.request, self, *args, **kwargs):
-                    contributor_id = request.data['contributor_id']
-                    try:
-                        user = get_user_model().objects.get(id=contributor_id)
-                    except Exception:
-                        return Response(status=status.HTTP_404_NOT_FOUND)
+                    if ProjectCanBeUpdate().has_permission(self.request, self, *args, **kwargs):
+                        contributor_id = request.data['contributor_id']
+                        try:
+                            user = get_user_model().objects.get(id=contributor_id)
+                        except Exception:
+                            return Response(status=status.HTTP_404_NOT_FOUND)
 
-                    if not user.can_contribute_to_a_project:
-                        message = {"message": "user is no more available as a contributor"}
+                        if not user.can_contribute_to_a_project:
+                            message = {"message": "user is no more available as a contributor"}
+                            return Response(message, status=status.HTTP_403_FORBIDDEN)
+                        request.data["project_id"] = pk
+                        request.data["user_id"] = user.id
+                        request.data["role"] = "CONTRIBUTOR"
+                        serializer = ContributorUpdateSerializer(data=request.data)
+                        if serializer.is_valid():
+                            serializer.save()
+                            return Response(serializer.data)
+                        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                    else:
+                        message = {"message": "Projet doit être au statut 'Ouvert'"}
                         return Response(message, status=status.HTTP_403_FORBIDDEN)
-                    request.data["project_id"] = pk
-                    request.data["user_id"] = user.id
-                    request.data["role"] = "CONTRIBUTOR"
-                    serializer = ContributorUpdateSerializer(data=request.data)
-                    if serializer.is_valid():
-                        serializer.save()
-                        return Response(serializer.data)
-                    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         message = {}
         return Response(message, status=status.HTTP_403_FORBIDDEN)
 
@@ -244,13 +248,17 @@ class ProjectsUsersAPIView(APIView):
             )
             if not contributors:
                 return Response(status=status.HTTP_404_NOT_FOUND)
-            if UserCanDeleteUserFromProject().has_permission(self.request, self, *args, **kwargs):
-                contributors.delete()
-                issues = Issues.objects.filter(assignee_user_id=user_id)
-                issues.delete()
-                return Response(status=status.HTTP_204_NO_CONTENT)
+            if ProjectCanBeUpdate().has_permission(self.request, self, *args, **kwargs):
+                if UserCanDeleteUserFromProject().has_permission(self.request, self, *args, **kwargs):
+                    contributors.delete()
+                    issues = Issues.objects.filter(assignee_user_id=user_id)
+                    issues.delete()
+                    return Response(status=status.HTTP_204_NO_CONTENT)
+                else:
+                    message = {}
+                    return Response(message, status=status.HTTP_403_FORBIDDEN)
             else:
-                message = {}
+                message = {"message": "Projet doit être au statut 'Ouvert'"}
                 return Response(message, status=status.HTTP_403_FORBIDDEN)
         else:
             message = {}
@@ -261,7 +269,7 @@ class IssuesRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
     """
     Description: dédiée à permettre la modification du statut d'un problème.
     """
-    permission_classes = [IsAuthenticated | UserCanViewProject | UserCanUpdateIssueStatus]
+    permission_classes = [IsAuthenticated | UserCanViewProject | UserCanUpdateIssueStatus | IssueCanBeUpdate]
     serializer_class = IssuesStatusSerializer
 
     def get_queryset(self, *args, **kwargs):
@@ -274,17 +282,20 @@ class IssuesRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
         except Exception:
             return Response(status=status.HTTP_404_NOT_FOUND)
         serializer = IssuesStatusSerializer(issue, data=request.data, partial=True)
-        if UserCanViewProject().has_permission(self.request, self, *args, **kwargs):
-            if UserCanUpdateIssueStatus().has_permission(self.request, self, *args, **kwargs):
-                if serializer.is_valid():
-                    serializer.save()
-                    return Response(serializer.data)
-                else:
-                    return Response(serializer.errors, status=status.HTTP_403_FORBIDDEN)
-            else:
+        if IssueCanBeUpdate().has_permission(self.request, self, *args, **kwargs):
+            if ProjectCanBeUpdate().has_permission(self.request, self, *args, **kwargs):
+                if UserCanViewProject().has_permission(self.request, self, *args, **kwargs):
+                    if UserCanUpdateIssueStatus().has_permission(self.request, self, *args, **kwargs):
+                        if serializer.is_valid():
+                            serializer.save()
+                            return Response(serializer.data)
                 return Response(status=status.HTTP_403_FORBIDDEN)
+            else:
+                message = {"message": "Projet doit être au statut 'Ouvert'"}
+                return Response(message, status=status.HTTP_403_FORBIDDEN)
         else:
-            return Response(status=status.HTTP_403_FORBIDDEN)
+            message = {"message": "Problème doit être au statut 'To Do' ou 'In Progress'"}
+            return Response(message, status=status.HTTP_403_FORBIDDEN)
         message = {}
         return Response(message, status=status.HTTP_400_BAD_REQUEST)
 
@@ -293,7 +304,7 @@ class IssuesAPIView(APIView):
     """
     Description: dédiée à permettre l'ajout, la consultation, modification ou suppression d'un problème.
     """
-    permission_classes = [IsAuthenticated | UserCanCreateIssue | UserCanUpdateIssue]
+    permission_classes = [IsAuthenticated | UserCanCreateIssue | UserCanUpdateIssue | IssueCanBeUpdate]
     serializer_class = IssuesSerializer
 
     def get_queryset(self, *args, **kwargs):
@@ -343,24 +354,29 @@ class IssuesAPIView(APIView):
         except Exception:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
-        if UserCanCreateIssue().has_permission(self.request, self, *args, **kwargs):
-            if AssigneeUserIsContributor().has_permission(self.request, self, *args, **kwargs):
-                assignee_user_id = args_dict.pop("assignee_user_id")
-                user = get_user_model().objects.get(id=assignee_user_id)
-                if not user.can_contribute_to_a_project:
-                    message = {"message": "user is no more available as a contributor"}
-                    return Response(message, status=status.HTTP_403_FORBIDDEN)
-                author_user_id = request.user
-                args_dict["project_id"] = project.id
-                args_dict["assignee_user_id"] = user.id
-                args_dict["author_user_id"] = author_user_id.id
+        if ProjectCanBeUpdate().has_permission(self.request, self, *args, **kwargs):
+            if UserCanCreateIssue().has_permission(self.request, self, *args, **kwargs):
+                if AssigneeUserIsContributor().has_permission(self.request, self, *args, **kwargs):
+                    assignee_user_id = args_dict.pop("assignee_user_id")
+                    user = get_user_model().objects.get(id=assignee_user_id)
+                    if not user.can_contribute_to_a_project:
+                        message = {"message": "user is no more available as a contributor"}
+                        return Response(message, status=status.HTTP_403_FORBIDDEN)
+                    author_user_id = request.user
+                    args_dict["project_id"] = project.id
+                    args_dict["assignee_user_id"] = user.id
+                    args_dict["author_user_id"] = author_user_id.id
 
-                serializer = IssuesSerializer(data=args_dict, many=False)
-                if serializer.is_valid():
-                    serializer.save()
-                else:
-                    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                return Response(serializer.data)
+                    serializer = IssuesSerializer(data=args_dict, many=False)
+                    if serializer.is_valid():
+                        serializer.save()
+                    else:
+                        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                    return Response(serializer.data)
+        else:
+            message = {"message": "Projet doit être au statut 'Ouvert'"}
+            return Response(message, status=status.HTTP_403_FORBIDDEN)
+
         message = {}
         return Response(message, status=status.HTTP_403_FORBIDDEN)
 
@@ -372,13 +388,21 @@ class IssuesAPIView(APIView):
         except Exception:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
-        if UserCanUpdateIssue().has_permission(self.request, self, *args, **kwargs):
-            args_dict['project_id'] = pk
-            serializer = IssuesSerializer(issue, data=request.data, partial=True)
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        if IssueCanBeUpdate().has_permission(self.request, self, *args, **kwargs):
+            if ProjectCanBeUpdate().has_permission(self.request, self, *args, **kwargs):
+                if UserCanUpdateIssue().has_permission(self.request, self, *args, **kwargs):
+                    args_dict['project_id'] = pk
+                    serializer = IssueSerializer(issue, data=request.data, partial=True)
+                    if serializer.is_valid():
+                        serializer.save()
+                        return Response(serializer.data)
+                    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                message = {"message": "Projet doit être au statut 'Ouvert'"}
+                return Response(message, status=status.HTTP_403_FORBIDDEN)
+        else:
+            message = {"message": "Problème doit être au statut 'To Do' ou 'In Progress'"}
+            return Response(message, status=status.HTTP_403_FORBIDDEN)
         message = {}
         return Response(message, status=status.HTTP_403_FORBIDDEN)
 
@@ -389,11 +413,19 @@ class IssuesAPIView(APIView):
         except Exception:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
-        if UserCanUpdateProject().has_permission(self.request, self, *args, **kwargs):
-            issue.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
+        if ProjectCanBeUpdate().has_permission(self.request, self, *args, **kwargs):
+            if UserCanUpdateProject().has_permission(self.request, self, *args, **kwargs):
+                if issue.status in ["To Do", "In Progress"]:
+                    issue.status = "Finished"
+                    issue.save()
+                    return Response(status=status.HTTP_204_NO_CONTENT)
+                else:
+                    return Response(status=status.HTTP_404_NOT_FOUND)
+            else:
+                message = {}
+                return Response(message, status=status.HTTP_403_FORBIDDEN)
         else:
-            message = {}
+            message = {"message": "Projet doit être au statut 'Ouvert'"}
             return Response(message, status=status.HTTP_403_FORBIDDEN)
 
 
@@ -401,7 +433,7 @@ class CommentsAPIView(APIView):
     """
     Description: dédiée à permettre l'ajout, la consultation, modification ou suppression d'un commentaire.
     """
-    permission_classes = [IsAuthenticated,]
+    permission_classes = [IsAuthenticated, UserCanCreateIssue | IssueCanBeUpdate]
 
     def get_queryset(self, *args, **kwargs):
         return Comments.objects.all()
@@ -463,16 +495,24 @@ class CommentsAPIView(APIView):
         except Exception:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
-        if UserCanViewProject().has_permission(self.request, self, *args, **kwargs):
-            args_dict["uuid"] = comment_uuid
-            args_dict["author_user_id"] = request.user.id
-            args_dict["issue_id"] = issue_id.id
-            serializer = CommentDetailSerializer(data=args_dict, many=False)
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data)
+        if IssueCanBeUpdate().has_permission(self.request, self, *args, **kwargs):
+            if ProjectCanBeUpdate().has_permission(self.request, self, *args, **kwargs):
+                if UserCanViewProject().has_permission(self.request, self, *args, **kwargs):
+                    args_dict["uuid"] = comment_uuid
+                    args_dict["author_user_id"] = request.user.id
+                    args_dict["issue_id"] = issue_id.id
+                    serializer = CommentDetailSerializer(data=args_dict, many=False)
+                    if serializer.is_valid():
+                        serializer.save()
+                        return Response(serializer.data)
+                    else:
+                        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             else:
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                message = {"message": "Projet doit être au statut 'Ouvert'"}
+                return Response(message, status=status.HTTP_403_FORBIDDEN)
+        else:
+            message = {"message": "Problème doit être au statut 'To Do' ou 'In Progress'"}
+            return Response(message, status=status.HTTP_403_FORBIDDEN)
         message = {}
         return Response(message, status=status.HTTP_403_FORBIDDEN)
 
@@ -485,14 +525,22 @@ class CommentsAPIView(APIView):
         except Exception:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
-        if UserCanViewProject().has_permission(self.request, self, *args, **kwargs):
-            if UserCanUpdateComment().has_permission(self.request, self, *args, **kwargs):
-                args_dict['issue_id'] = issue_id
-                serializer = CommentUpdateSerializer(comment, data=request.data, partial=True)
-                if serializer.is_valid():
-                    serializer.save()
-                    return Response(serializer.data)
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        if IssueCanBeUpdate().has_permission(self.request, self, *args, **kwargs):
+            if ProjectCanBeUpdate().has_permission(self.request, self, *args, **kwargs):
+                if UserCanViewProject().has_permission(self.request, self, *args, **kwargs):
+                    if UserCanUpdateComment().has_permission(self.request, self, *args, **kwargs):
+                        args_dict['issue_id'] = issue_id
+                        serializer = CommentUpdateSerializer(comment, data=request.data, partial=True)
+                        if serializer.is_valid():
+                            serializer.save()
+                            return Response(serializer.data)
+                        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                message = {"message": "Projet doit être au statut 'Ouvert'"}
+                return Response(message, status=status.HTTP_403_FORBIDDEN)
+        else:
+            message = {"message": "Problème doit être au statut 'To Do' ou 'In Progress'"}
+            return Response(message, status=status.HTTP_403_FORBIDDEN)
         message = {}
         return Response(message, status=status.HTTP_403_FORBIDDEN)
 
@@ -504,10 +552,18 @@ class CommentsAPIView(APIView):
         except Exception:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
-        if UserCanViewProject().has_permission(self.request, self, *args, **kwargs):
-            if UserCanUpdateComment().has_permission(self.request, self, *args, **kwargs):
-                comment.delete()
-                return Response(status=status.HTTP_204_NO_CONTENT)
+        if IssueCanBeUpdate().has_permission(self.request, self, *args, **kwargs):
+            if ProjectCanBeUpdate().has_permission(self.request, self, *args, **kwargs):
+                if UserCanViewProject().has_permission(self.request, self, *args, **kwargs):
+                    if UserCanUpdateComment().has_permission(self.request, self, *args, **kwargs):
+                        comment.delete()
+                        return Response(status=status.HTTP_204_NO_CONTENT)
+            else:
+                message = {"message": "Projet doit être au statut 'Ouvert'"}
+                return Response(message, status=status.HTTP_403_FORBIDDEN)
+        else:
+            message = {"message": "Problème doit être au statut 'To Do' ou 'In Progress'"}
+            return Response(message, status=status.HTTP_403_FORBIDDEN)
         message = {}
         return Response(message, status=status.HTTP_403_FORBIDDEN)
 
@@ -518,7 +574,9 @@ class ProjectsAPIView(APIView):
     """
     serializer_class = ProjectListSerializer
     detail_serializer_class = ProjectDetailSerializer
-    permission_classes = [IsAuthenticated | UserCanDeleteProject | UserCanDeleteProjects | UserCanUpdateProject, ]
+    permission_classes = [
+        IsAuthenticated | UserCanDeleteProject | UserCanDeleteProjects | UserCanUpdateProject | ProjectCanBeUpdate
+    ]
     info = ""
 
     def get_queryset(self, *args, **kwargs):
@@ -579,7 +637,6 @@ class ProjectsAPIView(APIView):
         user = get_user_model().objects.get(id=request.user.id)
         request.data["author_user_id"] = user.id
         serializer = ProjectDetailSerializer(data=request.data)
-
         if serializer.is_valid():
             project_id = serializer.save()
             Contributors.objects.create(
@@ -602,13 +659,17 @@ class ProjectsAPIView(APIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
 
         serializer = self.detail_serializer_class(project, data=request.data, partial=True)
-        if UserCanUpdateProject().has_permission(self.request, self, *args, **kwargs):
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        if ProjectCanBeUpdate().has_permission(self.request, self, *args, **kwargs):
+            if UserCanUpdateProject().has_permission(self.request, self, *args, **kwargs):
+                if serializer.is_valid():
+                    serializer.save()
+                    return Response(serializer.data)
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                message = {}
+                return Response(message, status=status.HTTP_403_FORBIDDEN)
         else:
-            message = {}
+            message = {"message": "Projet doit être au statut 'Ouvert'"}
             return Response(message, status=status.HTTP_403_FORBIDDEN)
 
     def delete(self, request, pk=None, *args, **kwargs):
@@ -629,8 +690,15 @@ class ProjectsAPIView(APIView):
                 return Response(status=status.HTTP_404_NOT_FOUND)
 
             if UserCanDeleteProject().has_permission(self.request, self, *args, **kwargs):
-                Projects.objects.get(id=pk).delete()
-                return Response(status=status.HTTP_204_NO_CONTENT)
+                project_issues_count = Issues.objects.filter(id=project.id).count()
+                if project.status == "Ouvert":
+                    if project_issues_count == 0:
+                        project.status = "Annulé"
+                    else:
+                        project.status = "Archivé"
+                    project.save()
+                    return Response(status=status.HTTP_204_NO_CONTENT)
+                return Response(status=status.HTTP_404_NOT_FOUND)
             else:
                 message = {}
                 return Response(message, status=status.HTTP_403_FORBIDDEN)

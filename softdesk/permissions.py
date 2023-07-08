@@ -225,7 +225,7 @@ class UserCanUpdateIssueStatus(BasePermission):
             .filter(id=issue_id)
             .filter(assignee_user_id=user_id).count()
         )
-        
+
         return bool(
             (
                 request.user and request.user.is_authenticated and issue_count > 0
@@ -295,3 +295,25 @@ class UserCanUpdateProjectUser(BasePermission):
                 request.user and request.user.is_authenticated and request.user.is_superuser
             )
         )
+
+
+class ProjectCanBeUpdate(BasePermission):
+    def has_permission(self, request, view):
+        """
+        Description: on vérifie si le projet est bien au statut Ouvert.
+        """
+        project_id = request.resolver_match.kwargs['pk']
+        project = Projects.objects.get(id=project_id)
+
+        return bool(project.status == "Ouvert")
+
+
+class IssueCanBeUpdate(BasePermission):
+    def has_permission(self, request, view):
+        """
+        Description: on vérifie si le problème n'est pas au statut "Finished"
+        """
+        issue_id = request.resolver_match.kwargs['issue_id']
+        issue = Issues.objects.get(id=issue_id)
+
+        return bool(issue.status != "Finished")

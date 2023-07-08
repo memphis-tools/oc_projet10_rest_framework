@@ -1,10 +1,8 @@
-from django.urls import resolve, reverse
+from django.urls import reverse
 from django.test import Client
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import status
 from time import sleep
-import json
 import pytest
 
 from authentication.models import User
@@ -71,7 +69,7 @@ class TestSignupAndLogin():
         response = client.post(url, self.user_data1)
         assert response.status_code == status.HTTP_201_CREATED
         assert User.objects.count() == 1
-        assert User.objects.get().username =='donald.duck'
+        assert User.objects.get().username == 'donald.duck'
 
     @pytest.mark.django_db
     def test_signup_user_younger_rgpd_min_age_without_parental_approvement_true(self):
@@ -217,7 +215,7 @@ class TestSignupAndLogin():
         """
         client = Client()
 
-        headers = {"Authorization": f"Bearer BeBopALula"}
+        headers = {"Authorization": "Bearer BeBopALula"}
         url = reverse('users')
         response = client.get(url, headers=headers)
         assert response.status_code == 401
@@ -340,7 +338,7 @@ class TestSignupAndLogin():
         url = reverse('signup')
         response = client.post(url, data=self.user_data1)
 
-        headers = {"Authorization": f"Bearer BeBopALula"}
+        headers = {"Authorization": "Bearer BeBopALula"}
         url = reverse('users_detail', kwargs={"pk": 1})
         response = client.delete(url, headers=headers)
         assert response.status_code == 401
@@ -417,7 +415,7 @@ class TestSignupAndLogin():
 
         data = {"can_profile_viewable": "False"}
         url = reverse('change_password', kwargs={"pk": 1})
-        headers = {"Authorization": f"Bearer BeBopALula"}
+        headers = {"Authorization": "Bearer BeBopALula"}
         response = client.put(url, data=data, content_type="application/json", headers=headers)
         assert response.status_code == 401
 
@@ -449,7 +447,7 @@ class TestSignupAndLogin():
         url = reverse('users_detail', kwargs={"pk": 1})
         response = client.put(url, data=data, content_type="application/json", headers=headers)
         assert response.status_code == 200
-        assert response.data["can_profile_viewable"] == False
+        assert response.data["can_profile_viewable"] is False
 
         sleep_time = settings.SIMPLE_JWT["ACCESS_TOKEN_LIFETIME"]
         sleep(sleep_time.seconds)
@@ -492,6 +490,6 @@ class TestSignupAndLogin():
 
         data = {"can_profile_viewable": "False"}
         url = reverse('users_detail', kwargs={"pk": 1})
-        headers = {"Authorization": f"Bearer BeBopALula"}
+        headers = {"Authorization": "Bearer BeBopALula"}
         response = client.put(url, data=data, content_type="application/json", headers=headers)
         assert response.status_code == 401

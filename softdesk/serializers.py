@@ -21,7 +21,7 @@ class ProjectListSerializer(ProjectsSerializerMixin, serializers.ModelSerializer
 
     class Meta:
         model = Projects
-        fields = ["id", "title", "type"]
+        fields = ["id", "title", "type", "status"]
 
 
 class ProjectDetailSerializer(ProjectsSerializerMixin, serializers.ModelSerializer):
@@ -29,7 +29,7 @@ class ProjectDetailSerializer(ProjectsSerializerMixin, serializers.ModelSerializ
 
     class Meta:
         model = Projects
-        fields = ["id", "title", "description", "type", "project_users"]
+        fields = ["id", "title", "description", "type", "status", "project_users"]
         extra_kwargs = {'project_users': {'write_only': True}}
 
     def get_project_users(self, instance):
@@ -37,6 +37,13 @@ class ProjectDetailSerializer(ProjectsSerializerMixin, serializers.ModelSerializ
         project_queryset = Contributors.objects.filter(user_id__in=project_users).filter(project_id=instance.id)
         serializer = ContributorListSerializer(project_queryset, many=True)
         return serializer.data
+
+    def validate_status(self, instance):
+        if instance["status"] not in ["Ouvert", "Archivé", "Annulé"]:
+            raise serializers.ValidationError(
+                f"Project status {instance['status']} unknow. Authorized values: Ouvert, Archivé, Annulé"
+            )
+        return instance
 
 
 class ContributorListSerializer(serializers.ModelSerializer):
@@ -123,15 +130,15 @@ class RegisterUserSerializer(serializers.ModelSerializer):
         except UserProtectByRGPD:
             if 'has_parental_approvement' not in instance:
                 raise serializers.ValidationError(
-                ("You are not {settings.RGPD_MIN_AGE} years old, and without parental approvement."
-                "You can not validate CNIL approvement by yourself."
-                "Set a 'has_parental_approvement' attribute to 'True'")
+                    ("You are not {settings.RGPD_MIN_AGE} years old, and without parental approvement."
+                        "You can not validate CNIL approvement by yourself."
+                        "Set a 'has_parental_approvement' attribute to 'True'")
                 )
             elif 'has_parental_approvement' in instance and instance['has_parental_approvement'] is False:
                 raise serializers.ValidationError(
-                ("You are not {settings.RGPD_MIN_AGE} years old, and without parental approvement."
-                "You can not validate CNIL approvement by yourself."
-                "Set a 'has_parental_approvement' attribute to 'True'")
+                    ("You are not {settings.RGPD_MIN_AGE} years old, and without parental approvement."
+                        "You can not validate CNIL approvement by yourself."
+                        "Set a 'has_parental_approvement' attribute to 'True'")
                 )
             return instance
 
@@ -262,9 +269,9 @@ class IssueMixin:
         return value
 
     def validate_status(self, value):
-        if value not in ["To Do", "In Progress", "Finished"]:
+        if value not in ["To Do", "In Progress", "Finished", "Canceled"]:
             raise serializers.ValidationError(
-                f"Status '{value}' unknow. Authorized values: To Do, In Progress, Finished")
+                f"Status '{value}' unknow. Authorized values: To Do, In Progress, Finished or Canceled")
         return value
 
 
