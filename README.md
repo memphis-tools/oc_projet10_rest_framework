@@ -25,7 +25,7 @@
 
 ---
 
-## How use this project ?
+## How works this project ?
 
     This REST API has a JWT tokens authentication mechanism implemented.
     When you log to the application you will receive 2 tokens: an access one and a refresh one.
@@ -33,6 +33,12 @@
     We set the "access token" with a 15 minutes lifetime validity. You will have to refresh your "access token".
     Procedure to refresh it is describe below (as well in Postman API documentation).
     Notice the application will prompt you when the token has expired.
+
+    The Postman API Doc should answer to any question about the basic usage : pay attention to the projects ans issues life cycles.
+
+---
+
+## How use this project ?
 
 1. Clone the repository
 
@@ -89,7 +95,7 @@
 4. Refresh your "access token"
 
    To refresh, you just need to add a request POST to "token/refresh/" endpoint addressing your "refresh token".
-   
+
    You will then receive a new "access token". Please follow examples in the Postman API documentation.
 
 6. Read the postman [API documentation](https://documenter.getpostman.com/view/24090419/2s93sc4sWt)

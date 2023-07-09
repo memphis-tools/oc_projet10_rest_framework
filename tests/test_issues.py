@@ -2,7 +2,7 @@ from django.urls import reverse
 from django.test import Client
 import pytest
 
-from softdesk.models import Projects
+from softdesk.models import Projects, Issues
 
 
 @pytest.mark.django_db
@@ -854,3 +854,72 @@ class TestIssuesCrudAndAuthorization():
         url = reverse('issues_detail', kwargs={"pk": 1, "issue_id": 1})
         response = client.delete(url, content_type="application/json", headers=headers)
         assert response.status_code == 403
+
+    @pytest.mark.django_db
+    @pytest.mark.parametrize("status", [("To Do"), ("In Progress"), ("Finished")])
+    def test_update_issue_status_with_expected_data(self, status):
+        """
+        Ensure a project status can be updated as 'To Do', 'In Progress', 'Finished'.
+        """
+        client = Client()
+        url = reverse('signup')
+        client.post(url, data=self.user_data1)
+        client.post(url, data=self.user_data2)
+
+        url = reverse('login')
+        data = {"username": self.user_data1["username"], "password": self.user_data1["password"]}
+        response = client.post(url, data=data)
+
+        access_token = response.data["access"]
+        headers = {"Authorization": f"Bearer {access_token}"}
+        url = reverse('projects')
+        response = client.post(url, data=self.project_data1, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('projects_users', kwargs={"pk": 1})
+        response = client.post(url, data=self.contributor_project1a, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('issues', kwargs={"pk": 1})
+        response = client.post(url, data=self.issue_data1, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('issues_detail', kwargs={"pk": 1, "issue_id": 1})
+        response = client.put(url, data={"status": status}, content_type="application/json", headers=headers)
+        issue = Issues.objects.get(id=1)
+        assert response.status_code == 200
+        assert issue.status == status
+
+    @pytest.mark.django_db
+    @pytest.mark.parametrize("status", [("progressing"), ("Ouvert"), ("Unfinished"), ("Annulé")])
+    def test_update_issue_status_with_unexpected_data(self, status):
+        """
+        Ensure a project status can only be updated as 'To Do', 'In Progress', 'Finished'.
+        """
+        client = Client()
+        url = reverse('signup')
+        client.post(url, data=self.user_data1)
+        client.post(url, data=self.user_data2)
+
+        url = reverse('login')
+        data = {"username": self.user_data1["username"], "password": self.user_data1["password"]}
+        response = client.post(url, data=data)
+
+        access_token = response.data["access"]
+        headers = {"Authorization": f"Bearer {access_token}"}
+        url = reverse('projects')
+        response = client.post(url, data=self.project_data1, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('projects_users', kwargs={"pk": 1})
+        response = client.post(url, data=self.contributor_project1a, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('issues', kwargs={"pk": 1})
+        response = client.post(url, data=self.issue_data1, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('issues_detail', kwargs={"pk": 1, "issue_id": 1})
+        response = client.put(url, data={"status": status}, content_type="application/json", headers=headers)
+        issue = Issues.objects.get(id=1)
+        assert response.status_code == 400

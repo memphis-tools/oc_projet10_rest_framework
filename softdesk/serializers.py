@@ -39,9 +39,9 @@ class ProjectDetailSerializer(ProjectsSerializerMixin, serializers.ModelSerializ
         return serializer.data
 
     def validate_status(self, instance):
-        if instance["status"] not in ["Ouvert", "Archivé", "Annulé"]:
+        if instance not in ["Ouvert", "Archivé", "Annulé"]:
             raise serializers.ValidationError(
-                f"Project status {instance['status']} unknow. Authorized values: Ouvert, Archivé, Annulé"
+                f"Project status {instance} unknow. Authorized values: Ouvert, Archivé, Annulé"
             )
         return instance
 
