@@ -7,7 +7,7 @@ from softdesk.models import Issues
 
 
 @pytest.mark.django_db
-class TestIssuesCrudAndAuthorization():
+class TestCommentsCrudAndAuthorization():
     user_data1 = {
         "username": "donald.duck",
         "first_name": "donald",

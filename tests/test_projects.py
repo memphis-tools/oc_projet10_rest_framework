@@ -55,7 +55,7 @@ class TestProjectsCrudAndAuthorization():
         "type": "front-end"
     }
 
-    project_data1_update = {
+    project_data1_update1 = {
         "description": "bla bla bla bla bla bla bla bla",
         "type": "iOS"
     }
@@ -253,7 +253,7 @@ class TestProjectsCrudAndAuthorization():
         assert response.status_code == 200
 
         url = reverse('projects_detail', kwargs={'pk': 1})
-        response = client.put(url, data=self.project_data1_update, content_type="application/json", headers=headers)
+        response = client.put(url, data=self.project_data1_update1, content_type="application/json", headers=headers)
         assert response.status_code == 200
         project = Projects.objects.get(id=1)
         assert project.type == "iOS"
@@ -286,7 +286,7 @@ class TestProjectsCrudAndAuthorization():
         access_token = response.data["access"]
         headers = {"Authorization": f"Bearer {access_token}"}
         url = reverse('projects_detail', kwargs={'pk': 1})
-        response = client.put(url, data=self.project_data1_update, content_type="application/json", headers=headers)
+        response = client.put(url, data=self.project_data1_update1, content_type="application/json", headers=headers)
         assert response.status_code == 403
 
     @pytest.mark.django_db
@@ -677,6 +677,58 @@ class TestProjectsCrudAndAuthorization():
         assert project.status == "Annulé"
 
     @pytest.mark.django_db
+    @pytest.mark.parametrize("status", [("Ouvert"), ("Archivé"), ("Annulé")])
+    def test_update_project_status_with_expected_data(self, status):
+        """
+        Ensure a project status can be updated as 'Ouvert', 'Archivé', 'Annulé'.
+        """
+        client = Client()
+        url = reverse('signup')
+        client.post(url, data=self.user_data1)
+        client.post(url, data=self.user_data2)
+
+        url = reverse('login')
+        data = {"username": self.user_data1["username"], "password": self.user_data1["password"]}
+        response = client.post(url, data=data)
+
+        access_token = response.data["access"]
+        headers = {"Authorization": f"Bearer {access_token}"}
+        url = reverse('projects')
+        response = client.post(url, data=self.project_data1, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('projects_detail', kwargs={'pk': 1})
+        response = client.put(url, data={"status": status}, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+        project = Projects.objects.get(id=1)
+        assert project.status == status
+
+    @pytest.mark.django_db
+    @pytest.mark.parametrize("status", [("Paused"), ("Archived"), ("Annulle"), ("To Do"), ("In Progress")])
+    def test_update_project_status_with_unexpected_data(self, status):
+        """
+        Ensure a project status can only be updated as 'Ouvert', 'Archivé', 'Annulé'.
+        """
+        client = Client()
+        url = reverse('signup')
+        client.post(url, data=self.user_data1)
+        client.post(url, data=self.user_data2)
+
+        url = reverse('login')
+        data = {"username": self.user_data1["username"], "password": self.user_data1["password"]}
+        response = client.post(url, data=data)
+
+        access_token = response.data["access"]
+        headers = {"Authorization": f"Bearer {access_token}"}
+        url = reverse('projects')
+        response = client.post(url, data=self.project_data1, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('projects_detail', kwargs={'pk': 1})
+        response = client.put(url, data={"status": status}, content_type="application/json", headers=headers)
+        assert response.status_code == 400
+
+    @pytest.mark.django_db
     def test_any_update_to_a_canceled_project(self):
         """
         Ensure an user can not add a contributor to project which status is "Annulé".
@@ -707,7 +759,7 @@ class TestProjectsCrudAndAuthorization():
         assert response.status_code == 403
 
         url = reverse('projects_detail', kwargs={'pk': 1})
-        response = client.put(url, data=self.project_data1_update, content_type="application/json", headers=headers)
+        response = client.put(url, data=self.project_data1_update1, content_type="application/json", headers=headers)
         assert response.status_code == 403
 
     @pytest.mark.django_db
@@ -749,5 +801,5 @@ class TestProjectsCrudAndAuthorization():
         assert response.status_code == 403
 
         url = reverse('projects_detail', kwargs={'pk': 1})
-        response = client.put(url, data=self.project_data1_update, content_type="application/json", headers=headers)
+        response = client.put(url, data=self.project_data1_update1, content_type="application/json", headers=headers)
         assert response.status_code == 403
