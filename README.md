@@ -30,11 +30,18 @@
     This REST API has a JWT tokens authentication mechanism implemented.
     When you log to the application you will receive 2 tokens: an access one and a refresh one.
     You will have to add the "access token" as a header in all your requests. Postman API documentation is below.
+
     We set the "access token" with a 15 minutes lifetime validity. You will have to refresh your "access token".
     Procedure to refresh it is describe below (as well in Postman API documentation).
     Notice the application will prompt you when the token has expired.
+    The Postman API Doc should answer to any question about the basic usage.
 
-    The Postman API Doc should answer to any question about the basic usage : pay attention to the projects ans issues life cycles.
+    Pay attention to the 'projects' and issues life cycles.
+    A 'project' can have the following status: Open, Archived, Canceled.
+    If you DELETE a 'project', as an author, which has no issues : 'project' will have status Canceled.
+    If you DELETE a 'project', as an author, which has at least 1 issue : 'project' will have status Archived.
+
+    An issue can have the following status: To Do, In Progress, Finished.
 
 ---
 
@@ -100,13 +107,15 @@
 
 6. Read the postman [API documentation](https://documenter.getpostman.com/view/24090419/2s93sc4sWt)
 
-      `Illustration`
-![Screenshot](oc_projet10_postman_doc.png)
+   Illustration
 
-      `All run in a development environment`
-![Screenshot](oc_projet10_postman_env_development.png)
+   ![Screenshot](oc_projet10_postman_doc.png)
 
-7. Test the project
+   All run in a development environment
+
+   ![Screenshot](oc_projet10_postman_env_development.png)
+
+8. Test the project
 
     To facilitate tests without updating the ACCESS_TOKEN_LIFETIME in settings file, you can use these instructions.
 
@@ -122,7 +131,12 @@
 
     `python ./manage.py migrate`
 
-    `pytest tests -v`
+    Before execute any test you should pay attention to the pytest.ini file.
+
+    To execute all the tests: `pytest tests -v`
+
+    To execute specific tests:
+    `pytest -v tests/test_users.py`, `pytest -v tests/test_projects.py`, `pytest -v tests/test_issues.py`, `pytest -v tests/test_comments.py`
 
     Unset the DJANGO_ENVIRONMENT
 

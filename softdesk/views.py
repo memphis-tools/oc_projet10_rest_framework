@@ -232,7 +232,7 @@ class ProjectsUsersAPIView(APIView):
                             return Response(serializer.data)
                         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
                     else:
-                        message = {"message": "Projet doit être au statut 'Ouvert'"}
+                        message = {"message": "Projet doit être au statut 'Open'"}
                         return Response(message, status=status.HTTP_403_FORBIDDEN)
         message = {}
         return Response(message, status=status.HTTP_403_FORBIDDEN)
@@ -258,7 +258,7 @@ class ProjectsUsersAPIView(APIView):
                     message = {}
                     return Response(message, status=status.HTTP_403_FORBIDDEN)
             else:
-                message = {"message": "Projet doit être au statut 'Ouvert'"}
+                message = {"message": "Projet doit être au statut 'Open'"}
                 return Response(message, status=status.HTTP_403_FORBIDDEN)
         else:
             message = {}
@@ -291,7 +291,7 @@ class IssuesRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
                             return Response(serializer.data)
                 return Response(status=status.HTTP_403_FORBIDDEN)
             else:
-                message = {"message": "Projet doit être au statut 'Ouvert'"}
+                message = {"message": "Projet doit être au statut 'Open'"}
                 return Response(message, status=status.HTTP_403_FORBIDDEN)
         else:
             message = {"message": "Problème doit être au statut 'To Do' ou 'In Progress'"}
@@ -374,7 +374,7 @@ class IssuesAPIView(APIView):
                         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
                     return Response(serializer.data)
         else:
-            message = {"message": "Projet doit être au statut 'Ouvert'"}
+            message = {"message": "Projet doit être au statut 'Open'"}
             return Response(message, status=status.HTTP_403_FORBIDDEN)
 
         message = {}
@@ -398,7 +398,7 @@ class IssuesAPIView(APIView):
                         return Response(serializer.data)
                     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             else:
-                message = {"message": "Projet doit être au statut 'Ouvert'"}
+                message = {"message": "Projet doit être au statut 'Open'"}
                 return Response(message, status=status.HTTP_403_FORBIDDEN)
         else:
             message = {"message": "Problème doit être au statut 'To Do' ou 'In Progress'"}
@@ -425,7 +425,7 @@ class IssuesAPIView(APIView):
                 message = {}
                 return Response(message, status=status.HTTP_403_FORBIDDEN)
         else:
-            message = {"message": "Projet doit être au statut 'Ouvert'"}
+            message = {"message": "Projet doit être au statut 'Open'"}
             return Response(message, status=status.HTTP_403_FORBIDDEN)
 
 
@@ -508,7 +508,7 @@ class CommentsAPIView(APIView):
                     else:
                         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             else:
-                message = {"message": "Projet doit être au statut 'Ouvert'"}
+                message = {"message": "Projet doit être au statut 'Open'"}
                 return Response(message, status=status.HTTP_403_FORBIDDEN)
         else:
             message = {"message": "Problème doit être au statut 'To Do' ou 'In Progress'"}
@@ -536,7 +536,7 @@ class CommentsAPIView(APIView):
                             return Response(serializer.data)
                         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             else:
-                message = {"message": "Projet doit être au statut 'Ouvert'"}
+                message = {"message": "Projet doit être au statut 'Open'"}
                 return Response(message, status=status.HTTP_403_FORBIDDEN)
         else:
             message = {"message": "Problème doit être au statut 'To Do' ou 'In Progress'"}
@@ -559,7 +559,7 @@ class CommentsAPIView(APIView):
                         comment.delete()
                         return Response(status=status.HTTP_204_NO_CONTENT)
             else:
-                message = {"message": "Projet doit être au statut 'Ouvert'"}
+                message = {"message": "Projet doit être au statut 'Open'"}
                 return Response(message, status=status.HTTP_403_FORBIDDEN)
         else:
             message = {"message": "Problème doit être au statut 'To Do' ou 'In Progress'"}
@@ -669,7 +669,7 @@ class ProjectsAPIView(APIView):
                 message = {}
                 return Response(message, status=status.HTTP_403_FORBIDDEN)
         else:
-            message = {"message": "Projet doit être au statut 'Ouvert'"}
+            message = {"message": "Projet doit être au statut 'Open'"}
             return Response(message, status=status.HTTP_403_FORBIDDEN)
 
     def delete(self, request, pk=None, *args, **kwargs):
@@ -691,11 +691,11 @@ class ProjectsAPIView(APIView):
 
             if UserCanDeleteProject().has_permission(self.request, self, *args, **kwargs):
                 project_issues_count = Issues.objects.filter(id=project.id).count()
-                if project.status == "Ouvert":
+                if project.status == "Open":
                     if project_issues_count == 0:
-                        project.status = "Annulé"
+                        project.status = "Canceled"
                     else:
-                        project.status = "Archivé"
+                        project.status = "Archived"
                     project.save()
                     return Response(status=status.HTTP_204_NO_CONTENT)
                 return Response(status=status.HTTP_404_NOT_FOUND)

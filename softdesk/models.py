@@ -12,8 +12,8 @@ class Projects(models.Model):
         get_user_model(),
         through='Contributors',
     )
-    # status possibles: Ouvert, Archivé, Annulé
-    status = models.CharField(max_length=30, default="Ouvert", null=False, blank=False)
+    # status possibles: Open, Archived, Canceled
+    status = models.CharField(max_length=30, default="Open", null=False, blank=False)
     created_time = models.DateTimeField(default=now)
 
 

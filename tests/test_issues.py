@@ -667,7 +667,7 @@ class TestIssuesCrudAndAuthorization():
         response = client.delete(url, content_type="application/json", headers=headers)
         project = Projects.objects.get(id=1)
         assert response.status_code == 204
-        assert project.status == "Annulé"
+        assert project.status == "Canceled"
 
         url = reverse('issues', kwargs={"pk": 1})
         response = client.post(url, data=self.issue_data1, content_type="application/json", headers=headers)
@@ -705,7 +705,7 @@ class TestIssuesCrudAndAuthorization():
         response = client.delete(url, content_type="application/json", headers=headers)
         project = Projects.objects.get(id=1)
         assert response.status_code == 204
-        assert project.status == "Archivé"
+        assert project.status == "Archived"
 
         url = reverse('issues', kwargs={"pk": 1})
         response = client.post(url, data=self.issue_data1, content_type="application/json", headers=headers)
@@ -739,7 +739,7 @@ class TestIssuesCrudAndAuthorization():
         response = client.delete(url, content_type="application/json", headers=headers)
         project = Projects.objects.get(id=1)
         assert response.status_code == 204
-        assert project.status == "Annulé"
+        assert project.status == "Canceled"
 
         url = reverse('issues_status', kwargs={"pk": 1, "issue_id": 1})
         response = client.put(url, data=self.issue_data1_update, content_type="application/json", headers=headers)
@@ -777,7 +777,7 @@ class TestIssuesCrudAndAuthorization():
         response = client.delete(url, content_type="application/json", headers=headers)
         project = Projects.objects.get(id=1)
         assert response.status_code == 204
-        assert project.status == "Archivé"
+        assert project.status == "Archived"
 
         url = reverse('issues_status', kwargs={"pk": 1, "issue_id": 1})
         response = client.put(url, data=self.issue_data1_update, content_type="application/json", headers=headers)
@@ -811,7 +811,7 @@ class TestIssuesCrudAndAuthorization():
         response = client.delete(url, content_type="application/json", headers=headers)
         project = Projects.objects.get(id=1)
         assert response.status_code == 204
-        assert project.status == "Annulé"
+        assert project.status == "Canceled"
 
         url = reverse('issues_detail', kwargs={"pk": 1, "issue_id": 1})
         response = client.delete(url, content_type="application/json", headers=headers)
@@ -849,7 +849,7 @@ class TestIssuesCrudAndAuthorization():
         response = client.delete(url, content_type="application/json", headers=headers)
         project = Projects.objects.get(id=1)
         assert response.status_code == 204
-        assert project.status == "Archivé"
+        assert project.status == "Archived"
 
         url = reverse('issues_detail', kwargs={"pk": 1, "issue_id": 1})
         response = client.delete(url, content_type="application/json", headers=headers)
@@ -891,7 +891,7 @@ class TestIssuesCrudAndAuthorization():
         assert issue.status == status
 
     @pytest.mark.django_db
-    @pytest.mark.parametrize("status", [("progressing"), ("Ouvert"), ("Unfinished"), ("Annulé")])
+    @pytest.mark.parametrize("status", [("progressing"), ("Open"), ("Unfinished"), ("Annulé")])
     def test_update_issue_status_with_unexpected_data(self, status):
         """
         Ensure a project status can only be updated as 'To Do', 'In Progress', 'Finished'.

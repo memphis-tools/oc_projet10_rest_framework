@@ -300,12 +300,12 @@ class UserCanUpdateProjectUser(BasePermission):
 class ProjectCanBeUpdate(BasePermission):
     def has_permission(self, request, view):
         """
-        Description: on vérifie si le projet est bien au statut Ouvert.
+        Description: on vérifie si le projet est bien au statut Open.
         """
         project_id = request.resolver_match.kwargs['pk']
         project = Projects.objects.get(id=project_id)
 
-        return bool(project.status == "Ouvert")
+        return bool(project.status == "Open")
 
 
 class IssueCanBeUpdate(BasePermission):
