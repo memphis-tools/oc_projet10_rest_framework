@@ -608,9 +608,9 @@ class TestProjectsCrudAndAuthorization():
     @pytest.mark.django_db
     def test_archive_project(self):
         """
-        Ensure a project can not be deleted (only by admin account) but only updated as "Annulé" ou "Archivé".
+        Ensure a project can not be deleted (only by admin account) but only updated as "Canceled" ou "Archived".
         We ensure here that a project with 2 users (means the same one, author and contributor) and at least 1 issue,
-        will have status "Archivé" after deletion.
+        will have status "Archived" after deletion.
         """
         client = Client()
         url = reverse('signup')
@@ -641,13 +641,13 @@ class TestProjectsCrudAndAuthorization():
         project = Projects.objects.get(id=1)
         assert response.status_code == 204
         assert projects_count == 1
-        assert project.status == "Archivé"
+        assert project.status == "Archived"
 
     @pytest.mark.django_db
     def test_cancel_project(self):
         """
-        Ensure a project can not be deleted (only by admin account) but only updated as "Annulé" ou "Archivé".
-        We ensure here that a project with at least 1 issue, will have status "Archivé" after deletion.
+        Ensure a project can not be deleted (only by admin account) but only updated as "Canceled" ou "Archived".
+        We ensure here that a project with at least 1 issue, will have status "Archived" after deletion.
         """
         client = Client()
         url = reverse('signup')
@@ -674,13 +674,13 @@ class TestProjectsCrudAndAuthorization():
         project = Projects.objects.get(id=1)
         assert response.status_code == 204
         assert projects_count == 1
-        assert project.status == "Annulé"
+        assert project.status == "Canceled"
 
     @pytest.mark.django_db
-    @pytest.mark.parametrize("status", [("Ouvert"), ("Archivé"), ("Annulé")])
+    @pytest.mark.parametrize("status", [("Open"), ("Archived"), ("Canceled")])
     def test_update_project_status_with_expected_data(self, status):
         """
-        Ensure a project status can be updated as 'Ouvert', 'Archivé', 'Annulé'.
+        Ensure a project status can be updated as 'Open', 'Archived', 'Canceled'.
         """
         client = Client()
         url = reverse('signup')
@@ -704,10 +704,10 @@ class TestProjectsCrudAndAuthorization():
         assert project.status == status
 
     @pytest.mark.django_db
-    @pytest.mark.parametrize("status", [("Paused"), ("Archived"), ("Annulle"), ("To Do"), ("In Progress")])
+    @pytest.mark.parametrize("status", [("Paused"), ("Archive"), ("Annulle"), ("To Do"), ("In Progress")])
     def test_update_project_status_with_unexpected_data(self, status):
         """
-        Ensure a project status can only be updated as 'Ouvert', 'Archivé', 'Annulé'.
+        Ensure a project status can only be updated as 'Open', 'Archived', 'Canceled'.
         """
         client = Client()
         url = reverse('signup')
@@ -731,7 +731,7 @@ class TestProjectsCrudAndAuthorization():
     @pytest.mark.django_db
     def test_any_update_to_a_canceled_project(self):
         """
-        Ensure an user can not add a contributor to project which status is "Annulé".
+        Ensure an user can not add a contributor to project which status is "Canceled".
         """
         client = Client()
         url = reverse('signup')
@@ -752,7 +752,7 @@ class TestProjectsCrudAndAuthorization():
         response = client.delete(url, content_type="application/json", headers=headers)
         project = Projects.objects.get(id=1)
         assert response.status_code == 204
-        assert project.status == "Annulé"
+        assert project.status == "Canceled"
 
         url = reverse('projects_users', kwargs={"pk": 1})
         response = client.post(url, data=self.contributor_project1a, content_type="application/json", headers=headers)
@@ -765,7 +765,7 @@ class TestProjectsCrudAndAuthorization():
     @pytest.mark.django_db
     def test_any_update_to_a_archived_project(self):
         """
-        Ensure an user can not add a contributor to project which status is "Archivé".
+        Ensure an user can not add a contributor to project which status is "Archived".
         """
         client = Client()
         url = reverse('signup')
@@ -794,7 +794,7 @@ class TestProjectsCrudAndAuthorization():
         response = client.delete(url, content_type="application/json", headers=headers)
         project = Projects.objects.get(id=1)
         assert response.status_code == 204
-        assert project.status == "Archivé"
+        assert project.status == "Archived"
 
         url = reverse('projects_users', kwargs={"pk": 1})
         response = client.post(url, data=self.contributor_project1a, content_type="application/json", headers=headers)
