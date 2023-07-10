@@ -71,9 +71,7 @@ class UserAPIView(APIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
 
         if UserCanUpdateUser().has_permission(self.request, self, *args, **kwargs):
-            user.delete()
-            issues = Issues.objects.filter(assignee_user_id=pk)
-            issues.delete()
+            issues = Issues.objects.filter(assignee_user_id=pk).update(assignee_user_id="")
             return Response(status=status.HTTP_204_NO_CONTENT)
         message = {}
         return Response(message, status=status.HTTP_403_FORBIDDEN)
@@ -122,8 +120,8 @@ class UsersAPIView(APIView):
             for user in users:
                 if not user.is_superuser:
                     user.delete()
-            issues = Issues.objects.all()
-            issues.delete()
+            Issues.objects.all().delete()
+            Projects.objects.all().delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         else:
             return Response(status=status.HTTP_403_FORBIDDEN)
@@ -267,7 +265,7 @@ class ProjectsUsersAPIView(APIView):
 
 class IssuesRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
     """
-    Description: dédiée à permettre la modification du statut d'un problème.
+    Description: dédiée à permettre la modification du seul statut d'un problème.
     """
     permission_classes = [IsAuthenticated | UserCanViewProject | UserCanUpdateIssueStatus | IssueCanBeUpdate]
     serializer_class = IssuesStatusSerializer
@@ -663,6 +661,8 @@ class ProjectsAPIView(APIView):
             if UserCanUpdateProject().has_permission(self.request, self, *args, **kwargs):
                 if serializer.is_valid():
                     serializer.save()
+                    if serializer.data['status'] != 'Open':
+                        Issues.objects.filter(project_id=project.id).update(status="Finished")
                     return Response(serializer.data)
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             else:
@@ -690,13 +690,14 @@ class ProjectsAPIView(APIView):
                 return Response(status=status.HTTP_404_NOT_FOUND)
 
             if UserCanDeleteProject().has_permission(self.request, self, *args, **kwargs):
-                project_issues_count = Issues.objects.filter(id=project.id).count()
+                project_issues_count = Issues.objects.filter(project_id=project.id).count()
                 if project.status == "Open":
                     if project_issues_count == 0:
                         project.status = "Canceled"
                     else:
                         project.status = "Archived"
                     project.save()
+                    Issues.objects.filter(project_id=project.id).update(status="Finished")
                     return Response(status=status.HTTP_204_NO_CONTENT)
                 return Response(status=status.HTTP_404_NOT_FOUND)
             else:

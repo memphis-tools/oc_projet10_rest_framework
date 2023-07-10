@@ -220,15 +220,22 @@ class UserCanUpdateIssueStatus(BasePermission):
         except Exception:
             # ce retour textuel n'est pas exploité. Un libellé était nécessaire pour permettre de jouer l'erreur 404.
             return "Project or Issue not found"
-        issue_count = (
+        issue_assignee_user_count = (
             Issues.objects
             .filter(id=issue_id)
             .filter(assignee_user_id=user_id).count()
         )
+        issue_author_user_count = (
+            Issues.objects
+            .filter(id=issue_id)
+            .filter(author_user_id=user_id).count()
+        )
 
         return bool(
             (
-                request.user and request.user.is_authenticated and issue_count > 0
+                request.user and request.user.is_authenticated and issue_assignee_user_count > 0
+            ) or (
+                request.user and request.user.is_authenticated and issue_author_user_count > 0
             ) or (
                 request.user and request.user.is_authenticated and request.user.is_superuser
             )

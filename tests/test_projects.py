@@ -4,7 +4,7 @@ from django.conf import settings
 from time import sleep
 import pytest
 
-from softdesk.models import Projects, Contributors
+from softdesk.models import Projects, Issues, Contributors
 
 
 @pytest.mark.django_db
@@ -610,7 +610,7 @@ class TestProjectsCrudAndAuthorization():
         """
         Ensure a project can not be deleted (only by admin account) but only updated as "Canceled" ou "Archived".
         We ensure here that a project with 2 users (means the same one, author and contributor) and at least 1 issue,
-        will have status "Archived" after deletion.
+        will have status "Archived" after deletion. Any related issues will then have the "Finished" status.
         """
         client = Client()
         url = reverse('signup')
@@ -639,15 +639,19 @@ class TestProjectsCrudAndAuthorization():
         response = client.delete(url, content_type="application/json", headers=headers)
         projects_count = Projects.objects.all().count()
         project = Projects.objects.get(id=1)
+        issues = Issues.objects.filter(project_id=project.id).update(status="Finished")
         assert response.status_code == 204
         assert projects_count == 1
         assert project.status == "Archived"
+        for issue in Issues.objects.filter(project_id=project.id):
+            assert issue.status == "Finished"
 
     @pytest.mark.django_db
     def test_cancel_project(self):
         """
         Ensure a project can not be deleted (only by admin account) but only updated as "Canceled" ou "Archived".
         We ensure here that a project with at least 1 issue, will have status "Archived" after deletion.
+        Any related issues will then have the "Finished" status.
         """
         client = Client()
         url = reverse('signup')
@@ -672,9 +676,12 @@ class TestProjectsCrudAndAuthorization():
         response = client.delete(url, content_type="application/json", headers=headers)
         projects_count = Projects.objects.all().count()
         project = Projects.objects.get(id=1)
+        issues = Issues.objects.filter(project_id=project.id).update(status="Finished")
         assert response.status_code == 204
         assert projects_count == 1
         assert project.status == "Canceled"
+        for issue in Issues.objects.filter(project_id=project.id):
+            assert issue.status == "Finished"
 
     @pytest.mark.django_db
     @pytest.mark.parametrize("status", [("Open"), ("Archived"), ("Canceled")])
