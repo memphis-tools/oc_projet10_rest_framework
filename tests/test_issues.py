@@ -451,10 +451,10 @@ class TestIssuesCrudAndAuthorization():
         headers = {"Authorization": f"Bearer {access_token}"}
         url = reverse('issues_status', kwargs={"pk": 1, "issue_id": 1})
         response = client.put(url, data=self.issue_data1_update, content_type="application/json", headers=headers)
-        assert response.status_code == 403
+        assert response.status_code == 200
 
     @pytest.mark.django_db
-    def test_authenticated_user_update_issue_status_for_which_he_is_not_assigned_is_not_author(self):
+    def test_authenticated_user_update_issue_status_for_which_he_is_not_assigned_and_is_not_author(self):
         """
         Ensure an authenticated user can not update an issue status when he is not assigned to it and is not author.
         """

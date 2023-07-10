@@ -40,8 +40,10 @@
     A 'project' can have the following status: Open, Archived, Canceled.
     If you DELETE a 'project', as an author, which has no issues : 'project' will have status Canceled.
     If you DELETE a 'project', as an author, which has at least 1 issue : 'project' will have status Archived.
+    Once project is archived or canceled, it can no more be updated or re-opened.
 
     An issue can have the following status: To Do, In Progress, Finished.
+    Once project is finished, it can no more be updated or re-opened.
 
 ---
 
