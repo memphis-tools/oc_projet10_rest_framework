@@ -73,7 +73,6 @@ class TestIssuesCrudAndAuthorization():
         "contributor_id": 2,
     }
 
-
     project_data2 = {
         "title": "Un 1er projet test de daisy.duck",
         "description": "bla bla bla",
@@ -459,10 +458,54 @@ class TestIssuesCrudAndAuthorization():
         assert response.status_code == 200
 
     @pytest.mark.django_db
+    def test_remove_user_from_project_where_he_is_assigned_to_issue(self):
+        """
+        When an user is removed from a project where he assigned to issue(s), issue won't be deleted.
+        The assignee_user_id must be None.
+        """
+        client = Client()
+        url = reverse('signup')
+        client.post(url, data=self.user_data1)
+        client.post(url, data=self.user_data2)
+        client.post(url, data=self.user_data3)
+        client.post(url, data=self.user_data4)
+
+        url = reverse('login')
+        data = {"username": self.user_data2["username"], "password": self.user_data2["password"]}
+        response = client.post(url, data=data)
+
+        access_token = response.data["access"]
+        headers = {"Authorization": f"Bearer {access_token}"}
+        url = reverse('projects')
+        response = client.post(url, data=self.project_data2, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('projects_detail', kwargs={"pk": 1})
+        response = client.get(url, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('projects_users', kwargs={"pk": 1})
+        response = client.post(url, data=self.contributor_project2a, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('issues', kwargs={"pk": 1})
+        response = client.post(url, data=self.issue_data3, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('projects_users_detail', kwargs={"pk": 1, "user_id": 4})
+        response = client.delete(url, content_type="application/json", headers=headers)
+        assert response.status_code == 204
+
+        url = reverse('issues_detail', kwargs={'pk': 1, 'issue_id': 1})
+        response = client.get(url, content_type="application/json", headers=headers)
+        assert response.data["assignee_user_id"] == None
+        assert response.status_code == 200
+
+    @pytest.mark.django_db
     def test_user_delete_himself_so_assignee_id_must_be_none_where_user_contribute_as_an_assignee(self):
         """
         When an authenticated user which delete his account we ensure the contributions which he is an assignee
-        will have assignee_user_id == Null.
+        will have assignee_user_id == None.
         """
         client = Client()
         url = reverse('signup')

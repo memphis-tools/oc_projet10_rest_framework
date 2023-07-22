@@ -260,7 +260,9 @@ class ProjectsUsersAPIView(APIView):
                 if UserCanDeleteUserFromProject().has_permission(self.request, self, *args, **kwargs):
                     contributors.delete()
                     issues = Issues.objects.filter(assignee_user_id=user_id)
-                    issues.delete()
+                    for issue in issues:
+                        issue.assignee_user_id = None
+                        issue.save()
                     return Response(status=status.HTTP_204_NO_CONTENT)
                 else:
                     message = {}
