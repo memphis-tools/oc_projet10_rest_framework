@@ -72,6 +72,16 @@ class UserAPIView(APIView):
 
         if UserCanUpdateUser().has_permission(self.request, self, *args, **kwargs):
             issues = Issues.objects.filter(assignee_user_id=pk).update(assignee_user_id="")
+            contributions_queryset = (
+                Contributors.objects
+                .filter(Q(user_id__in=[self.request.user.id]))
+                .filter(role="AUTHOR")
+                .values_list('project_id')
+            )
+            projects_queryset = Projects.objects.filter(Q(id__in=contributions_queryset))
+            serializer = ContributorListSerializer(contributions_queryset, many=True)
+            projects_queryset.delete()
+            user.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         message = {}
         return Response(message, status=status.HTTP_403_FORBIDDEN)
