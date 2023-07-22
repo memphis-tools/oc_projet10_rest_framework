@@ -349,7 +349,7 @@ class IssuesAPIView(APIView):
                 serializer = IssuesSerializer(queryset, many=False)
             else:
                 if UserCanViewProject().has_permission(self.request, self, *args, **kwargs):
-                    serializer = IssuesSerializer(queryset, many=True)
+                    serializer = IssuesSerializer(queryset, many=False)
                 else:
                     message = []
                     return Response(message, status=status.HTTP_403_FORBIDDEN)
@@ -399,12 +399,22 @@ class IssuesAPIView(APIView):
         if IssueCanBeUpdate().has_permission(self.request, self, *args, **kwargs):
             if ProjectCanBeUpdate().has_permission(self.request, self, *args, **kwargs):
                 if UserCanUpdateIssue().has_permission(self.request, self, *args, **kwargs):
-                    args_dict['project_id'] = pk
-                    serializer = IssueSerializer(issue, data=request.data, partial=True)
-                    if serializer.is_valid():
-                        serializer.save()
-                        return Response(serializer.data)
-                    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                    # on doit dstinguer le cas d'une mise à jour avec ou sans assigné
+                    if "assignee_user_id" in args_dict:
+                        if AssigneeUserIsContributor().has_permission(self.request, self, *args, **kwargs):
+                            args_dict['project_id'] = pk
+                            serializer = IssueSerializer(issue, data=request.data, partial=True)
+                            if serializer.is_valid():
+                                serializer.save()
+                                return Response(serializer.data)
+                            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                    else:
+                        args_dict['project_id'] = pk
+                        serializer = IssueSerializer(issue, data=request.data, partial=True)
+                        if serializer.is_valid():
+                            serializer.save()
+                            return Response(serializer.data)
+                        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             else:
                 message = {"message": "Projet doit être au statut 'Open'"}
                 return Response(message, status=status.HTTP_403_FORBIDDEN)

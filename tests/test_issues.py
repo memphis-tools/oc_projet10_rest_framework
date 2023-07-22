@@ -47,6 +47,20 @@ class TestIssuesCrudAndAuthorization():
         "general_cnil_approvment": True
     }
 
+    user_data4 = {
+        "username": "loulou.duck",
+        "first_name": "loulou",
+        "last_name": "duck",
+        "birthdate": "1999-9-13",
+        "email": "loulou.duck@bluelake.fr",
+        "password": "applepie94",
+        "password2": "applepie94",
+        "can_profile_viewable": True,
+        "can_contribute_to_a_project": True,
+        "has_parental_approvement": True,
+        "general_cnil_approvment": True
+    }
+
     project_data1 = {
         "title": "Un 1er projet test de donald.duck",
         "description": "bla bla bla",
@@ -59,10 +73,29 @@ class TestIssuesCrudAndAuthorization():
         "contributor_id": 2,
     }
 
+
     project_data2 = {
         "title": "Un 1er projet test de daisy.duck",
         "description": "bla bla bla",
         "type": "back-end"
+    }
+
+    contributor_project2a = {
+        "project_id": 1,
+        "user_id": 2,
+        "contributor_id": 4,
+    }
+
+    contributor_project2b = {
+        "project_id": 1,
+        "user_id": 2,
+        "contributor_id": 1,
+    }
+
+    contributor_project2c = {
+        "project_id": 1,
+        "user_id": 2,
+        "contributor_id": 1,
     }
 
     issue_data1 = {
@@ -89,6 +122,17 @@ class TestIssuesCrudAndAuthorization():
         "status": "To Do",
         "author_user_id": "2",
         "assignee_user_id": "1"
+    }
+
+    issue_data3 = {
+        "title": "1er problème à propos de la fonction affichage facture",
+        "description": "Phasellus posuere ultricies urna nec molestie. Ut nec leo pretium purus a, bibendum nulla.",
+        "balise": "BUG",
+        "priority": "HIGH",
+        "project_id": "1",
+        "status": "To Do",
+        "author_user_id": "2",
+        "assignee_user_id": "4"
     }
 
     @pytest.mark.django_db
@@ -413,6 +457,187 @@ class TestIssuesCrudAndAuthorization():
         url = reverse('issues_status', kwargs={"pk": 1, "issue_id": 1})
         response = client.put(url, data=self.issue_data1_update, content_type="application/json", headers=headers)
         assert response.status_code == 200
+
+    @pytest.mark.django_db
+    def test_user_delete_himself_so_assignee_id_must_be_none_where_user_contribute_as_an_assignee(self):
+        """
+        When an authenticated user which delete his account we ensure the contributions which he is an assignee
+        will have assignee_user_id == Null.
+        """
+        client = Client()
+        url = reverse('signup')
+        client.post(url, data=self.user_data1)
+        client.post(url, data=self.user_data2)
+        client.post(url, data=self.user_data3)
+        client.post(url, data=self.user_data4)
+
+        url = reverse('login')
+        data = {"username": self.user_data2["username"], "password": self.user_data2["password"]}
+        response = client.post(url, data=data)
+
+        access_token = response.data["access"]
+        headers = {"Authorization": f"Bearer {access_token}"}
+        url = reverse('projects')
+        response = client.post(url, data=self.project_data2, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('projects_detail', kwargs={"pk": 1})
+        response = client.get(url, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('projects_users', kwargs={"pk": 1})
+        response = client.post(url, data=self.contributor_project2a, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('issues', kwargs={"pk": 1})
+        response = client.post(url, data=self.issue_data3, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('login')
+        data = {"username": self.user_data4["username"], "password": self.user_data4["password"]}
+        response = client.post(url, data=data)
+
+        access_token = response.data["access"]
+        headers = {"Authorization": f"Bearer {access_token}"}
+        url = reverse('users_detail', kwargs={"pk": 4})
+        response = client.delete(url, headers=headers)
+        assert response.status_code == 204
+
+        url = reverse('login')
+        data = {"username": self.user_data2["username"], "password": self.user_data2["password"]}
+        response = client.post(url, data=data)
+
+        access_token = response.data["access"]
+        headers = {"Authorization": f"Bearer {access_token}"}
+        url = reverse('issues_detail', kwargs={'pk': 1, 'issue_id': 1})
+        response = client.get(url, content_type="application/json", headers=headers)
+        assert response.data["assignee_user_id"] == None
+        assert response.status_code == 200
+
+    @pytest.mark.django_db
+    def test_once_assignee_id_is_none_only_a_contributor_can_be_assginee_lets_try_missing_contributor(self):
+        """
+        When an authenticated user which delete his account we ensure the contributions which he is an assignee
+        will have assignee_user_id == Null.
+        """
+        client = Client()
+        url = reverse('signup')
+        client.post(url, data=self.user_data1)
+        client.post(url, data=self.user_data2)
+        client.post(url, data=self.user_data3)
+        client.post(url, data=self.user_data4)
+
+        url = reverse('login')
+        data = {"username": self.user_data2["username"], "password": self.user_data2["password"]}
+        response = client.post(url, data=data)
+
+        access_token = response.data["access"]
+        headers = {"Authorization": f"Bearer {access_token}"}
+        url = reverse('projects')
+        response = client.post(url, data=self.project_data2, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('projects_detail', kwargs={"pk": 1})
+        response = client.get(url, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('projects_users', kwargs={"pk": 1})
+        response = client.post(url, data=self.contributor_project2a, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('issues', kwargs={"pk": 1})
+        response = client.post(url, data=self.issue_data3, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('login')
+        data = {"username": self.user_data4["username"], "password": self.user_data4["password"]}
+        response = client.post(url, data=data)
+
+        access_token = response.data["access"]
+        headers = {"Authorization": f"Bearer {access_token}"}
+        url = reverse('users_detail', kwargs={"pk": 4})
+        response = client.delete(url, headers=headers)
+        assert response.status_code == 204
+
+        url = reverse('login')
+        data = {"username": self.user_data2["username"], "password": self.user_data2["password"]}
+        response = client.post(url, data=data)
+
+        access_token = response.data["access"]
+        headers = {"Authorization": f"Bearer {access_token}"}
+        url = reverse('issues_detail', kwargs={'pk': 1, 'issue_id': 1})
+        response = client.get(url, content_type="application/json", headers=headers)
+        assert response.data["assignee_user_id"] == None
+        assert response.status_code == 200
+
+        url = reverse('issues_detail', kwargs={'pk': 1, 'issue_id': 1})
+        response = client.put(url, data=self.issue_data2, content_type="application/json", headers=headers)
+        assert response.status_code == 403
+
+    @pytest.mark.django_db
+    def test_once_assignee_id_is_none_only_a_contributor_can_be_assginee_lets_try_valid_contributor(self):
+        """
+        When an authenticated user which delete his account we ensure the contributions which he is an assignee
+        will have assignee_user_id == Null.
+        """
+        client = Client()
+        url = reverse('signup')
+        client.post(url, data=self.user_data1)
+        client.post(url, data=self.user_data2)
+        client.post(url, data=self.user_data3)
+        client.post(url, data=self.user_data4)
+
+        url = reverse('login')
+        data = {"username": self.user_data2["username"], "password": self.user_data2["password"]}
+        response = client.post(url, data=data)
+
+        access_token = response.data["access"]
+        headers = {"Authorization": f"Bearer {access_token}"}
+        url = reverse('projects')
+        response = client.post(url, data=self.project_data2, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('projects_detail', kwargs={"pk": 1})
+        response = client.get(url, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('projects_users', kwargs={"pk": 1})
+        response = client.post(url, data=self.contributor_project2a, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('projects_users', kwargs={"pk": 1})
+        response = client.post(url, data=self.contributor_project2c, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('issues', kwargs={"pk": 1})
+        response = client.post(url, data=self.issue_data3, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
+        url = reverse('login')
+        data = {"username": self.user_data4["username"], "password": self.user_data4["password"]}
+        response = client.post(url, data=data)
+
+        access_token = response.data["access"]
+        headers = {"Authorization": f"Bearer {access_token}"}
+        url = reverse('users_detail', kwargs={"pk": 4})
+        response = client.delete(url, headers=headers)
+        assert response.status_code == 204
+
+        url = reverse('login')
+        data = {"username": self.user_data2["username"], "password": self.user_data2["password"]}
+        response = client.post(url, data=data)
+
+        access_token = response.data["access"]
+        headers = {"Authorization": f"Bearer {access_token}"}
+        url = reverse('issues_detail', kwargs={'pk': 1, 'issue_id': 1})
+        response = client.get(url, content_type="application/json", headers=headers)
+        assert response.data["assignee_user_id"] == None
+        assert response.status_code == 200
+
+        url = reverse('issues_detail', kwargs={'pk': 1, 'issue_id': 1})
+        response = client.put(url, data=self.issue_data2, content_type="application/json", headers=headers)
+        assert response.status_code == 200
+
 
     @pytest.mark.django_db
     def test_authenticated_user_update_issue_status_for_which_he_is_not_assigned_but_is_the_author(self):

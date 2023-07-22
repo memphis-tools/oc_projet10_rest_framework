@@ -12,7 +12,10 @@ class AssigneeUserIsContributor(BasePermission):
         """
         project_id = request.resolver_match.kwargs['pk']
         user_id = request.user.id
-        assignee_user_id = request.data['assignee_user_id']
+        try:
+            assignee_user_id = request.data['assignee_user_id']
+        except Exception:
+            assignee_user_id = request.data['contributor_id']
         contributor_count = (
             Contributors.objects
             .filter(project_id=project_id)
