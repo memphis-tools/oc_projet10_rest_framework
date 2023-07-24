@@ -91,7 +91,7 @@ class RegisterUserSerializer(serializers.ModelSerializer):
             "password",
             "password2",
             "has_parental_approvement",
-            "general_cnil_approvment",
+            "general_cnil_approvement",
             "can_be_contacted",
             "can_data_be_shared",
             "can_contribute_to_a_project",

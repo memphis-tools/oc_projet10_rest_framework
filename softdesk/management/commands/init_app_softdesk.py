@@ -64,7 +64,7 @@ class Command(BaseCommand):
                 "last_name": "duck",
                 "birthdate": "2001-07-15",
                 "email": "donald.duck@bluelake.fr",
-                "general_cnil_approvment": True,
+                "general_cnil_approvement": True,
                 "can_contribute_to_a_project": True,
                 "can_profile_viewable": True
             },
@@ -74,7 +74,7 @@ class Command(BaseCommand):
                 "last_name": "duck",
                 "birthdate": "2002-05-02",
                 "email": "daisy.duck@bluelake.fr",
-                "general_cnil_approvment": True,
+                "general_cnil_approvement": True,
                 "can_contribute_to_a_project": True,
                 "can_profile_viewable": True
             },
@@ -85,7 +85,7 @@ class Command(BaseCommand):
                 "birthdate": "2015-10-11",
                 "email": "loulou.duck@bluelake.fr",
                 "has_parental_approvement": True,
-                "general_cnil_approvment": True,
+                "general_cnil_approvement": True,
                 "can_be_contacted": True,
                 "can_data_be_shared": True,
                 "can_contribute_to_a_project": True,
@@ -98,7 +98,7 @@ class Command(BaseCommand):
             SUPERUSER_EMAIL,
             SUPERUSER_PASSWORD,
             birthdate="0001-01-01",
-            general_cnil_approvment=True
+            general_cnil_approvement=True
         )
         print(f"{Fore.GREEN}[DUMMY SUPERUSER CREATED]{Style.RESET_ALL}")
         print(f"{Fore.YELLOW}[DUMMY USERS CREATION]{Style.RESET_ALL}")
@@ -110,7 +110,7 @@ class Command(BaseCommand):
                 birthdate=user["birthdate"],
                 email=user["email"],
                 password="applepie94",
-                general_cnil_approvment=user["general_cnil_approvment"],
+                general_cnil_approvement=user["general_cnil_approvement"],
                 can_contribute_to_a_project=user["can_contribute_to_a_project"],
                 can_profile_viewable=user["can_profile_viewable"]
             )

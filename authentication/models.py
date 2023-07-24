@@ -20,7 +20,7 @@ class User(AbstractUser):
 
     # Due to European RGPD and the use of this app we must obtain explicit consentment for
     # collecting data for a minor.
-    general_cnil_approvment = models.BooleanField()
+    general_cnil_approvement = models.BooleanField()
 
     # Due to European RGPD and the use of this app we must propose User if we want to be
     # contacted or not

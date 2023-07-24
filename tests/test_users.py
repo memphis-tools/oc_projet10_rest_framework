@@ -19,7 +19,7 @@ class TestSignupAndLogin():
         "password": "applepie94",
         "password2": "applepie94",
         "can_profile_viewable": True,
-        "general_cnil_approvment": True
+        "general_cnil_approvement": True
     }
 
     user_data2 = {
@@ -31,7 +31,7 @@ class TestSignupAndLogin():
         "password": "applepie94",
         "password2": "applepie94",
         "can_profile_viewable": True,
-        "general_cnil_approvment": True
+        "general_cnil_approvement": True
     }
 
     user_data3 = {
@@ -43,7 +43,7 @@ class TestSignupAndLogin():
         "password": "applepie94",
         "password2": "applepie94",
         "can_profile_viewable": True,
-        "general_cnil_approvment": True
+        "general_cnil_approvement": True
     }
 
     user_data4 = {
@@ -56,7 +56,7 @@ class TestSignupAndLogin():
         "password2": "applepie94",
         "can_profile_viewable": True,
         "has_parental_approvement": False,
-        "general_cnil_approvment": True
+        "general_cnil_approvement": True
     }
 
     @pytest.mark.django_db
