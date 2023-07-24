@@ -18,7 +18,7 @@ class TestCommentsCrudAndAuthorization():
         "password2": "applepie94",
         "can_profile_viewable": True,
         "can_contribute_to_a_project": True,
-        "general_cnil_approvment": True
+        "general_cnil_approvement": True
     }
 
     user_data2 = {
@@ -31,7 +31,7 @@ class TestCommentsCrudAndAuthorization():
         "password2": "applepie94",
         "can_profile_viewable": True,
         "can_contribute_to_a_project": True,
-        "general_cnil_approvment": True
+        "general_cnil_approvement": True
     }
 
     user_data3 = {
@@ -45,7 +45,7 @@ class TestCommentsCrudAndAuthorization():
         "can_profile_viewable": True,
         "can_contribute_to_a_project": True,
         "has_parental_approvement": True,
-        "general_cnil_approvment": True
+        "general_cnil_approvement": True
     }
 
     project_data1 = {
