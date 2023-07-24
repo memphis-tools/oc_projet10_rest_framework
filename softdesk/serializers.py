@@ -130,13 +130,13 @@ class RegisterUserSerializer(serializers.ModelSerializer):
         except UserProtectByRGPD:
             if 'has_parental_approvement' not in instance:
                 raise serializers.ValidationError(
-                    ("You are not {settings.RGPD_MIN_AGE} years old, and without parental approvement."
+                    (f"You are not {settings.RGPD_MIN_AGE} years old, and without parental approvement."
                         "You can not validate CNIL approvement by yourself."
                         "Set a 'has_parental_approvement' attribute to 'True'")
                 )
             elif 'has_parental_approvement' in instance and instance['has_parental_approvement'] is False:
                 raise serializers.ValidationError(
-                    ("You are not {settings.RGPD_MIN_AGE} years old, and without parental approvement."
+                    (f"You are not {settings.RGPD_MIN_AGE} years old, and without parental approvement."
                         "You can not validate CNIL approvement by yourself."
                         "Set a 'has_parental_approvement' attribute to 'True'")
                 )
