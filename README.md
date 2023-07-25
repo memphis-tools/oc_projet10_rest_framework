@@ -75,6 +75,8 @@
 
       `poetry config cache-dir ./.cache/pypoetry --local`
 
+      `poetry config virtualenvs.prompt oc_projet10`
+
       `poetry install`
 
       `poetry update`
