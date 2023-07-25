@@ -42,6 +42,6 @@ class User(AbstractUser):
     can_profile_viewable = models.BooleanField(default=True)
     created_time = models.DateTimeField(default=now)
     projects_contributions_ids = models.ManyToManyField(
-        'softdesk.Projects',
-        through='softdesk.Contributors',
+        "softdesk.Projects",
+        through="softdesk.Contributors",
     )

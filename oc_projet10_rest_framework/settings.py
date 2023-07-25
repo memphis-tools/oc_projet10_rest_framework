@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from datetime import timedelta
 
@@ -12,12 +13,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
-CSRF_COOKIE_SECURE = True
-SESSION_COOKIE_SECURE = True
-SECURE_HSTS_SECONDS = True
-USE_SSL = False
-SECURE_SSL_REDIRECT = False
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+CSRF_COOKIE_HTTPONLY = True
 
 # Application definition
 INSTALLED_APPS = [
@@ -104,10 +100,16 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'authentication.User'
 
 # https://github.com/jazzband/djangorestframework-simplejwt/blob/master/rest_framework_simplejwt/settings.py
-SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
-}
+if "DJANGO_ENVIRONMENT" in os.environ and os.environ.get("DJANGO_ENVIRONMENT") == "TEST":
+    SIMPLE_JWT = {
+        "ACCESS_TOKEN_LIFETIME": timedelta(seconds=2),
+        "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    }
+else:
+    SIMPLE_JWT = {
+        "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
+        "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    }
 
 REST_FRAMEWORK = {
     'TEST_REQUEST_DEFAULT_FORMAT': 'json',

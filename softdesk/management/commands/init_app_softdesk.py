@@ -15,7 +15,7 @@ SUPERUSER_EMAIL = "admin@bluelake.fr"
 PROJECT_DIR = "."
 DATABASE_NAME = "db.sqlite3"
 DATABASE_PATH = f"{PROJECT_DIR}/{DATABASE_NAME}"
-APPS = ['authentication', 'softdesk']
+APPS = ["authentication", "softdesk"]
 
 
 class Command(BaseCommand):
@@ -30,8 +30,10 @@ class Command(BaseCommand):
             print(f"{Fore.GREEN}[NO DATABASE FOUND]{Style.RESET_ALL}")
 
         print(f"{Fore.YELLOW}[REMOVING MIGRATIONS]{Style.RESET_ALL}")
-        pattern = re.compile(r'([0]{3}).*py$')
-        subprocess.run(["rm", "-rf", f"{PROJECT_DIR}/oc_projet10_rest_framework/__pycache__"])
+        pattern = re.compile(r"([0]{3}).*py$")
+        subprocess.run(
+            ["rm", "-rf", f"{PROJECT_DIR}/oc_projet10_rest_framework/__pycache__"]
+        )
         for app in APPS:
             subprocess.run(["rm", "-rf", f"{PROJECT_DIR}/{app}/__pycache__"])
             subprocess.run(["rm", "-rf", f"{PROJECT_DIR}/{app}/migrations/__pycache__"])
@@ -44,15 +46,21 @@ class Command(BaseCommand):
         subprocess.run(["python", "manage.py", "makemigrations"])
         print(f"{Fore.GREEN}[MIGRATIONS PERFORMED]{Style.RESET_ALL}")
 
-        print(f"{Fore.YELLOW}[APPLYING MIGRATIONS TO DATABASE FOR APP: authentication]{Style.RESET_ALL}")
+        print(
+            f"{Fore.YELLOW}[APPLYING MIGRATIONS TO DATABASE FOR APP: authentication]{Style.RESET_ALL}"
+        )
         subprocess.run(["python", "manage.py", "migrate", "authentication"])
         print(f"{Fore.GREEN}[MIGRATIONS APPLIED TO DATABASE]{Style.RESET_ALL}")
 
-        print(f"{Fore.YELLOW}[APPLYING MIGRATIONS TO DATABASE FOR APP: softdesk]{Style.RESET_ALL}")
+        print(
+            f"{Fore.YELLOW}[APPLYING MIGRATIONS TO DATABASE FOR APP: softdesk]{Style.RESET_ALL}"
+        )
         subprocess.run(["python", "manage.py", "migrate", "softdesk"])
         print(f"{Fore.GREEN}[MIGRATIONS APPLIED TO DATABASE]{Style.RESET_ALL}")
 
-        print(f"{Fore.YELLOW}[APPLYING MIGRATIONS TO DATABASE FOR GENERAL PURPOSE]{Style.RESET_ALL}")
+        print(
+            f"{Fore.YELLOW}[APPLYING MIGRATIONS TO DATABASE FOR GENERAL PURPOSE]{Style.RESET_ALL}"
+        )
         subprocess.run(["python", "manage.py", "migrate"])
         print(f"{Fore.GREEN}[MIGRATIONS APPLIED TO DATABASE]{Style.RESET_ALL}")
 
@@ -66,7 +74,7 @@ class Command(BaseCommand):
                 "email": "donald.duck@bluelake.fr",
                 "general_cnil_approvement": True,
                 "can_contribute_to_a_project": True,
-                "can_profile_viewable": True
+                "can_profile_viewable": True,
             },
             {
                 "username": "daisy.duck",
@@ -76,7 +84,7 @@ class Command(BaseCommand):
                 "email": "daisy.duck@bluelake.fr",
                 "general_cnil_approvement": True,
                 "can_contribute_to_a_project": True,
-                "can_profile_viewable": True
+                "can_profile_viewable": True,
             },
             {
                 "username": "loulou.duck",
@@ -89,7 +97,7 @@ class Command(BaseCommand):
                 "can_be_contacted": True,
                 "can_data_be_shared": True,
                 "can_contribute_to_a_project": True,
-                "can_profile_viewable": False
+                "can_profile_viewable": False,
             },
         ]
         print(f"{Fore.YELLOW}[DUMMY SUPERUSER CREATION]{Style.RESET_ALL}")
@@ -98,7 +106,7 @@ class Command(BaseCommand):
             SUPERUSER_EMAIL,
             SUPERUSER_PASSWORD,
             birthdate="0001-01-01",
-            general_cnil_approvement=True
+            general_cnil_approvement=True,
         )
         print(f"{Fore.GREEN}[DUMMY SUPERUSER CREATED]{Style.RESET_ALL}")
         print(f"{Fore.YELLOW}[DUMMY USERS CREATION]{Style.RESET_ALL}")
@@ -112,7 +120,7 @@ class Command(BaseCommand):
                 password="applepie94",
                 general_cnil_approvement=user["general_cnil_approvement"],
                 can_contribute_to_a_project=user["can_contribute_to_a_project"],
-                can_profile_viewable=user["can_profile_viewable"]
+                can_profile_viewable=user["can_profile_viewable"],
             )
         print(f"{Fore.GREEN}[DUMMY USERS CREATED]{Style.RESET_ALL}")
 
@@ -123,41 +131,42 @@ class Command(BaseCommand):
                 "title": f"Un 1er projet test de {User.objects.get(id=2).first_name}",
                 "description": "bla bla bla",
                 "type": "front-end",
-                "author_user_id": 2
+                "author_user_id": 2,
             },
             {
                 "title": f"Un 2eme projet test de {User.objects.get(id=2).first_name}",
                 "description": "bla bla bla",
                 "type": "back-end",
-                "author_user_id": 2
+                "author_user_id": 2,
             },
             {
                 "title": f"Un 1er projet test de {User.objects.get(id=3).first_name}",
                 "description": "bla bla bla",
                 "type": " Android",
-                "author_user_id": 3
+                "author_user_id": 3,
             },
             {
                 "title": f"Un 3eme projet test de {User.objects.get(id=2).first_name}",
                 "description": "bla bla bla",
                 "type": "IOS",
-                "author_user_id": 2
+                "author_user_id": 2,
             },
         ]
         for project in projects_list:
             preproject = Projects.objects.create(
                 title=project["title"],
                 description=project["description"],
-                type=project["type"]
+                type=project["type"],
             )
             preproject.save()
             preproject.project_users.set([project["author_user_id"]])
             preproject.save()
             user = User.objects.get(id=project["author_user_id"])
-            (Contributors.objects
-                .filter(project_id=preproject.id)
+            (
+                Contributors.objects.filter(project_id=preproject.id)
                 .filter(user_id=user.id)
-                .update(role="AUTHOR"))
+                .update(role="AUTHOR")
+            )
 
         print(f"{Fore.GREEN}[DUMMY PROJECTS CREATED]{Style.RESET_ALL}")
 
@@ -205,7 +214,7 @@ class Command(BaseCommand):
             project_id=project,
             status="To Do",
             author_user_id=user_author,
-            assignee_user_id=user_assignee
+            assignee_user_id=user_assignee,
         )
         user_author = User.objects.get(id=3)
         user_assignee = User.objects.get(id=4)
@@ -218,7 +227,7 @@ class Command(BaseCommand):
             project_id=project,
             status="To Do",
             author_user_id=user_author,
-            assignee_user_id=user_assignee
+            assignee_user_id=user_assignee,
         )
         print(f"{Fore.GREEN}[DUMMY ISSUES ADDED]{Style.RESET_ALL}")
 
@@ -231,7 +240,7 @@ class Command(BaseCommand):
             title="Dur comme 1ère tâche, bon courage",
             description="Aliquam eleifend mi sit amet ante maximus interdum. Fusce in diam euismod, scelerisque sem.",
             author_user_id=user,
-            issue_id=issue
+            issue_id=issue,
         )
         issue = Issues.objects.get(id=2)
         project = Projects.objects.get(id=3)
@@ -241,7 +250,7 @@ class Command(BaseCommand):
             title="Parler de nouveau avec le client",
             description="Nulla facilisi. Duis sollicitudin nunc et tincidunt. Proin viverra ex ut est finibus ?",
             author_user_id=user,
-            issue_id=issue
+            issue_id=issue,
         )
         issue = Issues.objects.get(id=2)
         project = Projects.objects.get(id=3)
@@ -251,6 +260,6 @@ class Command(BaseCommand):
             title="Besoin d'aide",
             description="Donec scelerisque ut magna vel auctor. Ut eu augue sit amet sapien eleifend feugiat sodales",
             author_user_id=user,
-            issue_id=issue
+            issue_id=issue,
         )
         print(f"{Fore.GREEN}[DUMMY COMMENTS ADDED]{Style.RESET_ALL}")

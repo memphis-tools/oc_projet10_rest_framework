@@ -13,12 +13,12 @@ class ProjectsSerializerMixin:
     def validate_type(self, value):
         if value not in ["back-end", "front-end", "iOS", "Android"]:
             raise serializers.ValidationError(
-                f"Type '{value}' unknow. Authorized values: back-end, front-end, iOS, Android")
+                f"Type '{value}' unknow. Authorized values: back-end, front-end, iOS, Android"
+            )
         return value
 
 
 class ProjectListSerializer(ProjectsSerializerMixin, serializers.ModelSerializer):
-
     class Meta:
         model = Projects
         fields = ["id", "title", "type", "status"]
@@ -30,11 +30,13 @@ class ProjectDetailSerializer(ProjectsSerializerMixin, serializers.ModelSerializ
     class Meta:
         model = Projects
         fields = ["id", "title", "description", "type", "status", "project_users"]
-        extra_kwargs = {'project_users': {'write_only': True}}
+        extra_kwargs = {"project_users": {"write_only": True}}
 
     def get_project_users(self, instance):
         project_users = instance.project_users.all()
-        project_queryset = Contributors.objects.filter(user_id__in=project_users).filter(project_id=instance.id)
+        project_queryset = Contributors.objects.filter(
+            user_id__in=project_users
+        ).filter(project_id=instance.id)
         serializer = ContributorListSerializer(project_queryset, many=True)
         return serializer.data
 
@@ -74,9 +76,11 @@ class ContributorUpdateSerializer(serializers.ModelSerializer):
 class RegisterUserSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(
         required=True,
-        validators=[UniqueValidator(queryset=get_user_model().objects.all())]
+        validators=[UniqueValidator(queryset=get_user_model().objects.all())],
     )
-    password = serializers.CharField(required=True, write_only=True, validators=[validate_password])
+    password = serializers.CharField(
+        required=True, write_only=True, validators=[validate_password]
+    )
     password2 = serializers.CharField(required=True, write_only=True)
 
     class Meta:
@@ -95,9 +99,12 @@ class RegisterUserSerializer(serializers.ModelSerializer):
             "can_be_contacted",
             "can_data_be_shared",
             "can_contribute_to_a_project",
-            "can_profile_viewable"
+            "can_profile_viewable",
         ]
-        extra_kwargs = {'password': {'write_only': True}, 'has_parental_approvement': {'write_only': True}}
+        extra_kwargs = {
+            "password": {"write_only": True},
+            "has_parental_approvement": {"write_only": True},
+        }
 
     def has_parental_approvement(self, instance):
         """
@@ -123,29 +130,36 @@ class RegisterUserSerializer(serializers.ModelSerializer):
 
     def validate(self, instance):
         try:
-            if self.has_rgpd_min_age(instance['birthdate']):
-                if instance['password'] != instance['password2']:
+            if self.has_rgpd_min_age(instance["birthdate"]):
+                if instance["password"] != instance["password2"]:
                     raise serializers.ValidationError("Passwords must match")
                 return instance
         except UserProtectByRGPD:
-            if 'has_parental_approvement' not in instance:
+            if "has_parental_approvement" not in instance:
                 raise serializers.ValidationError(
-                    (f"You are not {settings.RGPD_MIN_AGE} years old, and without parental approvement."
+                    (
+                        f"You are not {settings.RGPD_MIN_AGE} years old, and without parental approvement."
                         "You can not validate CNIL approvement by yourself."
-                        "Set a 'has_parental_approvement' attribute to 'True'")
+                        "Set a 'has_parental_approvement' attribute to 'True'"
+                    )
                 )
-            elif 'has_parental_approvement' in instance and instance['has_parental_approvement'] is False:
+            elif (
+                "has_parental_approvement" in instance
+                and instance["has_parental_approvement"] is False
+            ):
                 raise serializers.ValidationError(
-                    (f"You are not {settings.RGPD_MIN_AGE} years old, and without parental approvement."
+                    (
+                        f"You are not {settings.RGPD_MIN_AGE} years old, and without parental approvement."
                         "You can not validate CNIL approvement by yourself."
-                        "Set a 'has_parental_approvement' attribute to 'True'")
+                        "Set a 'has_parental_approvement' attribute to 'True'"
+                    )
                 )
             return instance
 
     def create(self, data):
-        password2 = data.pop('password2')
+        password2 = data.pop("password2")
         user = get_user_model()(**data)
-        user.set_password(data['password'])
+        user.set_password(data["password"])
         user.save()
         return user
 
@@ -168,7 +182,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
             "can_data_be_shared",
             "can_contribute_to_a_project",
             "can_profile_viewable",
-            "created_time"
+            "created_time",
         ]
 
 
@@ -180,7 +194,9 @@ class UserListSerializer(serializers.ModelSerializer):
 
 class UserUpdatePasswordSerializer(serializers.ModelSerializer):
     old_password = serializers.CharField(required=True, write_only=True)
-    password = serializers.CharField(required=True, write_only=False, validators=[validate_password])
+    password = serializers.CharField(
+        required=True, write_only=False, validators=[validate_password]
+    )
     password2 = serializers.CharField(required=True, write_only=True)
 
     class Meta:
@@ -188,19 +204,23 @@ class UserUpdatePasswordSerializer(serializers.ModelSerializer):
         fields = ["old_password", "password", "password2"]
 
     def validate(self, instance):
-        if instance['password'] != instance['password2']:
+        if instance["password"] != instance["password2"]:
             raise serializers.ValidationError("Passwords must match")
 
-        does_user_update_his_own_pwd = bool(self.context['request'].user.id != self.instance.id)
-        is_user_superadmin = bool(self.context['request'].user.is_superuser)
+        does_user_update_his_own_pwd = bool(
+            self.context["request"].user.id != self.instance.id
+        )
+        is_user_superadmin = bool(self.context["request"].user.is_superuser)
         if bool(does_user_update_his_own_pwd or is_user_superadmin):
             raise serializers.ValidationError("User can only change his password")
         return instance
 
     def validate_old_password(self, value):
-        user = self.context['request'].user
+        user = self.context["request"].user
         if not user.check_password(value):
-            raise serializers.ValidationError({"old_password": "Old password is not correct"})
+            raise serializers.ValidationError(
+                {"old_password": "Old password is not correct"}
+            )
         return value
 
 
@@ -215,7 +235,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
             "can_be_contacted",
             "can_data_be_shared",
             "can_contribute_to_a_project",
-            "can_profile_viewable"
+            "can_profile_viewable",
         ]
 
     def validate_first_name(self, instance):
@@ -236,22 +256,30 @@ class UserUpdateSerializer(serializers.ModelSerializer):
 
     def validate_can_be_contacted(self, instance):
         if instance is not True and instance is not False:
-            raise serializers.ValidationError({"can_be_contacted": "True/False expected"})
+            raise serializers.ValidationError(
+                {"can_be_contacted": "True/False expected"}
+            )
         return instance
 
     def validate_can_data_be_shared(self, instance):
         if instance is not True and instance is not False:
-            raise serializers.ValidationError({"can_data_be_shared": "True/False expected"})
+            raise serializers.ValidationError(
+                {"can_data_be_shared": "True/False expected"}
+            )
         return instance
 
     def validate_can_contribute_to_a_project(self, instance):
         if instance is not True and instance is not False:
-            raise serializers.ValidationError({"can_contribute_to_a_project": "True/False expected"})
+            raise serializers.ValidationError(
+                {"can_contribute_to_a_project": "True/False expected"}
+            )
         return instance
 
     def validate_can_profile_viewable(self, instance):
         if instance is not True and instance is not False:
-            raise serializers.ValidationError({"can_profile_viewable": "True/False expected"})
+            raise serializers.ValidationError(
+                {"can_profile_viewable": "True/False expected"}
+            )
         return instance
 
 
@@ -259,26 +287,36 @@ class IssueMixin:
     def validate_balise(self, value):
         if value not in ["BUG", "TASK", "FEATURE"]:
             raise serializers.ValidationError(
-                f"Balise '{value}' unknow. Authorized values: BUG, TASK, FEATURE")
+                f"Balise '{value}' unknow. Authorized values: BUG, TASK, FEATURE"
+            )
         return value
 
     def validate_priority(self, value):
         if value not in ["LOW", "MEDIUM", "HIGH"]:
             raise serializers.ValidationError(
-                f"Priority '{value}' unknow. Authorized values: LOW, MEDIUM, HIGH")
+                f"Priority '{value}' unknow. Authorized values: LOW, MEDIUM, HIGH"
+            )
         return value
 
     def validate_status(self, value):
         if value not in ["To Do", "In Progress", "Finished", "Canceled"]:
             raise serializers.ValidationError(
-                f"Status '{value}' unknow. Authorized values: To Do, In Progress, Finished or Canceled")
+                f"Status '{value}' unknow. Authorized values: To Do, In Progress, Finished or Canceled"
+            )
         return value
 
 
 class IssueSerializer(IssueMixin, serializers.ModelSerializer):
     class Meta:
         model = Issues
-        fields = ["title", "description", "status", "balise", "priority", "assignee_user_id"]
+        fields = [
+            "title",
+            "description",
+            "status",
+            "balise",
+            "priority",
+            "assignee_user_id",
+        ]
 
 
 class IssuesSerializer(IssueMixin, serializers.ModelSerializer):
@@ -314,7 +352,15 @@ class CommentListSerializer(CommentMixin, serializers.ModelSerializer):
 class CommentDetailSerializer(CommentMixin, serializers.ModelSerializer):
     class Meta:
         model = Comments
-        fields = ["id", "uuid", "title", "description", "author_user_id", "issue_id", "created_time"]
+        fields = [
+            "id",
+            "uuid",
+            "title",
+            "description",
+            "author_user_id",
+            "issue_id",
+            "created_time",
+        ]
 
 
 class CommentUpdateSerializer(CommentMixin, serializers.ModelSerializer):
