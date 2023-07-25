@@ -109,7 +109,7 @@
 
    You will then receive a new "access token". Please follow examples in the Postman API documentation.
 
-6. Read the postman [API documentation](https://documenter.getpostman.com/view/24090419/2s93sc4sWt)
+5. Read the postman [API documentation](https://documenter.getpostman.com/view/24090419/2s93sc4sWt)
 
    Illustration
 
@@ -119,13 +119,11 @@
 
    ![Screenshot](oc_projet10_postman_env_development.png)
 
-8. Test the project
+6. Test the project
 
     To facilitate tests without updating the ACCESS_TOKEN_LIFETIME in settings file, you can use these instructions.
 
-    The only difference between the main settings.py and the tests_settings.py is the ACCESS_TOKEN_LIFETIME duration.
-
-    You will need first to create a virtual-env (with 'venv' or 'poetry') as describe above.
+    You will need first to create a virtual-env (with 'venv' or 'poetry') as describe above. Then:
 
     `export DJANGO_ENVIRONMENT=TESTS`
 
@@ -137,11 +135,11 @@
 
     Before execute any test you should pay attention to the pytest.ini file.
 
-    To execute all the tests: `pytest tests -v`
+    To execute all the tests: `pytest tests -v` or `pytest tests -vs`
 
     To execute specific tests:
     `pytest -v tests/test_users.py`, `pytest -v tests/test_projects.py`, `pytest -v tests/test_issues.py`, `pytest -v tests/test_comments.py`
 
-    Unset the DJANGO_ENVIRONMENT
+    Once you ran it, unset the DJANGO_ENVIRONMENT
 
     `unset DJANGO_ENVIRONMENT`
