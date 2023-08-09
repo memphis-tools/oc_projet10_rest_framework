@@ -125,7 +125,7 @@
 
     You will need first to create a virtual-env (with 'venv' or 'poetry') as describe above. Then:
 
-    `export DJANGO_ENVIRONMENT=TESTS`
+    `export DJANGO_ENVIRONMENT=TEST`
 
     `echo $DJANGO_ENVIRONMENT`
 
