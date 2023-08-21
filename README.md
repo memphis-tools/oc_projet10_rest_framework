@@ -91,7 +91,18 @@
 
       `python ./manage.py migrate`
 
-      `python ./manage.py createsuperuser` (and follow instructions)
+      **Create a super user**:
+      `python ./manage.py shell` by following these instructions :
+
+        >>> from authentication.models import User
+
+        >>> username="admin"
+
+        >>> email="admin@localhost"
+
+        >>> password="applepie94"
+
+        >>> User.objects.create_superuser(username, email, password, birthdate="0001-01-01", general_cnil_approvement=True)
 
       `python ./manage.py runserver`
 
