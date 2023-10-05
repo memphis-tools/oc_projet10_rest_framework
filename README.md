@@ -1,4 +1,7 @@
-![Screenshot](python-django-rest-framework.svg)
+![Screenshot](https://img.shields.io/badge/python-v3.10-blue?logo=python&logoColor=yellow)
+![Screenshot](https://img.shields.io/badge/django.rest.framework--blue?logo=django&logoColor=yellow)
+![Screenshot](https://img.shields.io/badge/postman--blue?logo=postman&logoColor=yellow)
+
 # [OpenClassRoom](https://openclassrooms.com/) - Parcours développeur Python
 ![Screenshot](oc_parcours_dev_python.png)
 ## Projet 10 - Créer une API sécurisée RESTful en utilisant Django REST
